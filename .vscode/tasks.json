@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SII: iniciar scraper (todo en uno)",
+      "type": "shell",
+      "command": "${workspaceFolder}\\SCRAPEAR_GEOMETRIAS.cmd",
+      "args": [],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": [],
+      "group": {"kind": "build", "isDefault": true},
+      "presentation": {"reveal": "always", "panel": "dedicated", "clear": true}
+    },
+    {
+      "label": "SII: instalar scraper",
+      "type": "shell",
+      "command": "${workspaceFolder}\\scripts\\setup_geometry_scraper.cmd",
+      "args": [],
+      "problemMatcher": []
+    },
+    {
+      "label": "SII: seleccionar región/comunas",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "sii_geometry", "scrape"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "SII: configurar almacenamiento",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "sii_geometry", "configure-storage"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "SII: respaldar comunas terminadas",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "sii_geometry", "publish", "--periodo", "2026S2"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "SII: planificar Peñaflor",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "sii_geometry", "scrape", "--comuna", "14504", "--dry-run"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "SII: procesar Peñaflor",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "sii_geometry", "scrape", "--comuna", "14504"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    }
+  ]
+}

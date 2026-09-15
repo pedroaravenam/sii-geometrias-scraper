@@ -1,0 +1,19 @@
+# Datos y resultados
+data/
+*.parquet
+*.sqlite
+*.jsonl
+*.jsonl.gz
+*.zip
+
+# Configuración y entorno de cada equipo
+config/*.local.json
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.tmp/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

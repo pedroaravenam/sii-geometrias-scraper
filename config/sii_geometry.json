@@ -1,0 +1,22 @@
+{
+  "periodo_geometria": "2026S2",
+  "zoom": 19,
+  "supercell_tiles": 4,
+  "block_supercells": 4,
+  "block_overlap_supercells": 1,
+  "boundary_buffer_m": 250,
+  "request_delay_s": 0.5,
+  "request_timeout_s": 45,
+  "max_retries": 5,
+  "backoff_base_s": 2,
+  "urban_min_area_m2": 1,
+  "urban_max_area_m2": 50000,
+  "large_polygon_min_area_m2": 5000,
+  "fill_color": [182, 221, 232],
+  "fill_tolerance": [20, 22, 22],
+  "min_fill_alpha": 20,
+  "catalog_url": "https://raw.githubusercontent.com/crishernandezmaps/catastral.cl/main/comunas_sii.json",
+  "boundaries_url": "https://raw.githubusercontent.com/fcortes/Chile-GeoJSON/master/comunas.geojson",
+  "wms_url": "https://www4.sii.cl/mapasui/services/ui/wmsProxyService/call",
+  "api_url": "https://www4.sii.cl/mapasui/services/data/mapasFacadeService"
+}

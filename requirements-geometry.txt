@@ -1,0 +1,11 @@
+requests>=2.32,<3
+numpy>=2.0,<3
+pandas>=2.2,<3
+Pillow>=11,<13
+scipy>=1.14,<2
+shapely>=2.0,<3
+pyproj>=3.6,<4
+rasterio>=1.4,<2
+geopandas>=1.0,<2
+pyarrow>=18,<24
+pyogrio>=0.10,<1
