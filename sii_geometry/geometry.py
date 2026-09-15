@@ -160,16 +160,30 @@ def vectorize_image(
     return polygons, metrics
 
 
+def _axis_windows(values: Iterable[int], block_size: int, stride: int, step: int):
+    """Produce ventanas solapadas sin atravesar saltos territoriales."""
+    ordered = sorted(set(values))
+    if not ordered:
+        return
+    runs: list[list[int]] = [[ordered[0]]]
+    for value in ordered[1:]:
+        if value - runs[-1][-1] == step:
+            runs[-1].append(value)
+        else:
+            runs.append([value])
+    for run in runs:
+        for index in range(0, len(run), stride):
+            yield run[index : index + block_size]
+
+
 def _block_origins(supercells: Iterable[tuple[int, int]], settings: Settings):
     cells = set(supercells)
-    xs = sorted({x for x, _ in cells})
-    ys = sorted({y for _, y in cells})
     stride = max(1, settings.block_supercells - settings.block_overlap_supercells)
     step = settings.supercell_tiles
-    for y_index in range(0, len(ys), stride):
-        for x_index in range(0, len(xs), stride):
-            block_xs = xs[x_index : x_index + settings.block_supercells]
-            block_ys = ys[y_index : y_index + settings.block_supercells]
+    x_windows = list(_axis_windows((x for x, _ in cells), settings.block_supercells, stride, step))
+    y_windows = list(_axis_windows((y for _, y in cells), settings.block_supercells, stride, step))
+    for block_ys in y_windows:
+        for block_xs in x_windows:
             members = [(x, y) for y in block_ys for x in block_xs if (x, y) in cells]
             if members:
                 yield block_xs[0], block_ys[0], members, step
@@ -238,6 +252,11 @@ def vectorize_supercells(
         max_y = max(y for _, y in members)
         width_cells = ((max_x - origin_x) // step) + 1
         height_cells = ((max_y - origin_y) // step) + 1
+        if width_cells > settings.block_supercells or height_cells > settings.block_supercells:
+            raise RuntimeError(
+                "Bloque cartográfico discontinuo: se evitó una asignación excesiva de memoria "
+                f"({width_cells}x{height_cells} superceldas)"
+            )
         canvas = np.zeros((height_cells * pixels, width_cells * pixels, 4), dtype=np.uint8)
         for sc_x, sc_y in members:
             path = tiles_dir / f"sc_{sc_x}_{sc_y}.png"

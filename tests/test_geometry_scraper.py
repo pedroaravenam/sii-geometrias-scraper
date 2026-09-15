@@ -15,7 +15,7 @@ from shapely.geometry import Point, box
 from sii_geometry.catalog import normalize_name
 from sii_geometry.cli import resolve_reference_csv
 from sii_geometry.config import load_settings
-from sii_geometry.geometry import merge_overlapping_polygons, vectorize_image
+from sii_geometry.geometry import _block_origins, merge_overlapping_polygons, vectorize_image
 from sii_geometry.matching import match_roles_to_polygons
 from sii_geometry.records import extract_role_keys
 from sii_geometry.reference_assets import file_sha256, validate_reference_asset
@@ -38,6 +38,21 @@ class GeometryScraperTests(unittest.TestCase):
         polygons, metrics = vectorize_image(image, (0, 0, 20, 20), settings)
         self.assertEqual(len(polygons), 2)
         self.assertGreater(metrics["fill_pixels"], 0)
+
+    def test_blocks_do_not_bridge_distant_islands(self):
+        settings = load_settings()
+        step = settings.supercell_tiles
+        distant_x = step * 100_000
+        cells = [(0, 0), (step, 0), (distant_x, 0), (distant_x + step, 0)]
+
+        blocks = list(_block_origins(cells, settings))
+
+        self.assertEqual(len(blocks), 2)
+        for origin_x, origin_y, members, _ in blocks:
+            width = ((max(x for x, _ in members) - origin_x) // step) + 1
+            height = ((max(y for _, y in members) - origin_y) // step) + 1
+            self.assertLessEqual(width, settings.block_supercells)
+            self.assertLessEqual(height, settings.block_supercells)
 
     def test_match_uses_point_in_polygon_and_nearest(self):
         polygons = gpd.GeoDataFrame(
