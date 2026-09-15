@@ -18,7 +18,7 @@ Abra `cmd` o PowerShell y ejecute:
 ```bat
 git clone https://github.com/pedroaravenam/sii-geometrias-scraper.git
 cd sii-geometrias-scraper
-SCRAPEAR_GEOMETRIAS.cmd
+.\SCRAPEAR_GEOMETRIAS.cmd
 ```
 
 En la primera ejecución el programa:
@@ -35,13 +35,13 @@ avance parcial queda en checkpoints y puede reanudarse.
 También puede procesarse una comuna directamente:
 
 ```bat
-SCRAPEAR_GEOMETRIAS.cmd --comuna 14504
+.\SCRAPEAR_GEOMETRIAS.cmd --comuna 14504
 ```
 
 O una región completa:
 
 ```bat
-SCRAPEAR_GEOMETRIAS.cmd --region "Metropolitana de Santiago"
+.\SCRAPEAR_GEOMETRIAS.cmd --region "Metropolitana de Santiago"
 ```
 
 ## Resultados
