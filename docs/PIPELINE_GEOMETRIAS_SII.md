@@ -24,8 +24,8 @@ sin Docker, WSL, VPN ni servidores externos.
 3. Calcula superceldas de 1.024 x 1.024 píxeles a zoom 19.
 4. Descarga los PNG con pausas, reintentos y caché local.
 5. Vectoriza por bloques con solape y detección tolerante del color de relleno.
-6. Extrae del CSV 2026S1 las claves de roles de la comuna, sólo como universo
-   candidato para consultar la API vigente.
+6. Descarga una vez el Parquet histórico 2026S1 de la región, verifica su
+   SHA-256 y extrae las claves de roles de la comuna.
 7. Consulta `getPredioNacional` y conserva todos los datos publicados en 2026S2.
 8. Asocia coordenadas y polígonos mediante punto-en-polígono, vecino hasta 10 m
    y herencias controladas de coordenada o dirección.
@@ -37,7 +37,8 @@ sin Docker, WSL, VPN ni servidores externos.
 ## 4. Inputs necesarios
 
 - Conexión capaz de acceder a `www4.sii.cl`.
-- CSV `data/raw/catastral/catastro_2026_1*.csv` para enumerar roles candidatos.
+- Parquet regional 2026S1 descargado automáticamente desde la Release pública;
+  contiene las 39 columnas históricas para enumeración y validación.
 - Configuración en `config/sii_geometry.json`.
 - Catálogo comunal de Catastral.cl y límite comunal derivado de BCN; ambos se
   descargan una vez y quedan cacheados bajo `data/raw/geometrias/_reference/`.
@@ -65,6 +66,7 @@ cada respaldo terminado actualiza su fila correspondiente.
 
 ```text
 Catastro_SII/
+├── insumos/2026S1/catastro_2026S1_metropolitana.parquet
 ├── catalogo/estado_geometrias.csv
 └── 2026S2/
     ├── geoparquet/14504_penaflor.parquet
@@ -149,18 +151,18 @@ scripts\setup_geometry_scraper.cmd
 ```
 
 La primera instalación abre un selector para elegir una carpeta local o
-sincronizada donde guardar los resultados. También solicita el CSV original
-`catastro_2026_1*.csv` cuando éste no existe dentro del proyecto. Ambas rutas se
-guardan en `config/sii_geometry.local.json`, que no se versiona. En otro equipo
-se vuelve a ejecutar el instalador o se indica la ruta de resultados:
+sincronizada donde guardar los resultados. Después de seleccionar región o
+comunas se descarga y verifica automáticamente el Parquet histórico necesario.
+La ruta local se guarda en `config/sii_geometry.local.json`, que no se versiona.
+En otro equipo se vuelve a ejecutar el instalador o se indica la ruta:
 
 ```powershell
 .\.venv\Scripts\python.exe -m sii_geometry configure-storage --path "D:\Catastro_SII"
 ```
 
 También puede definirse `SII_GEOMETRY_STORAGE_ROOT`, útil si cada equipo usa una
-ruta local, OneDrive o Google Drive diferente. El CSV puede indicarse en cada
-ejecución con `--reference-csv "D:\Microdatos\catastro_2026_1.csv"`.
+ruta local, OneDrive o Google Drive diferente. Para controles especiales todavía
+puede indicarse un CSV o Parquet alternativo con `--reference-csv RUTA`.
 
 Selector interactivo:
 

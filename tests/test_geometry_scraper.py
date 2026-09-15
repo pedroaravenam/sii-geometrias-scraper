@@ -9,6 +9,7 @@ from pathlib import Path
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 from shapely.geometry import Point, box
 
 from sii_geometry.catalog import normalize_name
@@ -16,6 +17,8 @@ from sii_geometry.cli import resolve_reference_csv
 from sii_geometry.config import load_settings
 from sii_geometry.geometry import merge_overlapping_polygons, vectorize_image
 from sii_geometry.matching import match_roles_to_polygons
+from sii_geometry.records import extract_role_keys
+from sii_geometry.reference_assets import file_sha256, validate_reference_asset
 from sii_geometry.state import checkpoint_database, read_manifest, save_api_result, write_json_atomic
 from sii_geometry.storage import publish_commune, save_storage_configuration
 
@@ -119,6 +122,39 @@ class GeometryScraperTests(unittest.TestCase):
         self.assertEqual(settings.storage_root, storage_root.resolve())
         self.assertEqual(settings.reference_csv, reference_csv.resolve())
 
+    def test_extract_role_keys_from_regional_parquet(self):
+        root = TEST_TMP_ROOT / "unit_regional_reference"
+        root.mkdir(parents=True, exist_ok=True)
+        reference = root / "catastro_2026S1_test.parquet"
+        pd.DataFrame(
+            {
+                "comuna": [14504, 14504, 5302],
+                "manzana": ["001", "002", "003"],
+                "predio": ["0001", "0002", "0003"],
+                "rc_avaluo_total": [10, 20, 30],
+            }
+        ).to_parquet(reference, index=False)
+
+        roles = extract_role_keys(reference, "14504")
+
+        self.assertEqual(roles["rol"].tolist(), ["1-1", "2-2"])
+
+    def test_regional_asset_validation_checks_hash_schema_and_commune(self):
+        root = TEST_TMP_ROOT / "unit_asset_validation"
+        root.mkdir(parents=True, exist_ok=True)
+        reference = root / "region.parquet"
+        pd.DataFrame({"comuna": [14504], "manzana": [1], "predio": [2]}).to_parquet(reference, index=False)
+        parquet = pq.ParquetFile(reference)
+        asset = {
+            "bytes": reference.stat().st_size,
+            "rows": 1,
+            "sha256": file_sha256(reference),
+        }
+
+        validate_reference_asset(reference, asset, parquet.schema.names, ["14504"])
+        with self.assertRaises(ValueError):
+            validate_reference_asset(reference, {**asset, "sha256": "0" * 64}, parquet.schema.names)
+
     def test_publish_commune_creates_central_package_and_catalog(self):
         root = TEST_TMP_ROOT / "unit_storage"
         raw = root / "local" / "raw" / "2026S2" / "14504_penaflor"
@@ -187,7 +223,7 @@ class GeometryScraperTests(unittest.TestCase):
         self.assertTrue((central / "2026S2" / "wms_archivados" / "14504_penaflor_tiles.zip").exists())
         self.assertTrue(result["catalog"].exists())
         catalog = pd.read_csv(result["catalog"], dtype={"codigo_comuna": "string"})
-        self.assertEqual(len(catalog), 2)
+        self.assertEqual(len(catalog), 3)
         self.assertEqual(
             catalog.set_index("codigo_comuna").loc["14505", "status"],
             "pendiente",

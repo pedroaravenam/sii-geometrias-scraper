@@ -24,26 +24,3 @@ def select_directory(title: str, initial: Path | None = None) -> Path | None:
         return Path(selected) if selected else None
     except Exception:
         return None
-
-
-def select_csv(title: str, initial: Path | None = None) -> Path | None:
-    """Abre el selector nativo para elegir el microdato catastral."""
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes("-topmost", True)
-        try:
-            selected = filedialog.askopenfilename(
-                parent=root,
-                title=title,
-                initialdir=str(initial) if initial and initial.exists() else None,
-                filetypes=(("Archivos CSV", "*.csv"), ("Todos los archivos", "*.*")),
-            )
-        finally:
-            root.destroy()
-        return Path(selected) if selected else None
-    except Exception:
-        return None

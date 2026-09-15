@@ -137,6 +137,8 @@ def _pending_catalog_rows(settings: Settings, period: str) -> list[dict[str, str
     if not reference.exists():
         return []
     communes = json.loads(reference.read_text(encoding="utf-8"))
+    if not any(str(commune.get("id")) == "8108" for commune in communes):
+        communes.append({"id": "8108", "nombre": "Trehuaco", "region": "Ñuble"})
     return [
         {
             **{column: "" for column in CATALOG_COLUMNS},

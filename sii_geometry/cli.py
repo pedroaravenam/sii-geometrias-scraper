@@ -12,8 +12,9 @@ import requests
 from .catalog import find_commune, load_catalog, normalize_name, select_interactively
 from .client import SIIClient
 from .config import DEFAULT_CONFIG_PATH, load_settings
-from .dialogs import select_csv, select_directory
+from .dialogs import select_directory
 from .pipeline import process_commune
+from .reference_assets import ensure_regional_references
 from .state import read_manifest
 from .storage import (
     detect_onedrive_root,
@@ -120,7 +121,7 @@ def configure_storage(config_path: Path, selected_path: Path | None, archive_wms
     return 0
 
 
-def resolve_reference_csv(config_path: Path, selected_path: Path | None) -> Path:
+def resolve_reference_csv(config_path: Path, selected_path: Path | None) -> Path | None:
     settings = load_settings(config_path)
     default_candidates = sorted(
         (settings.repository_root / "data" / "raw" / "catastral").glob("catastro_2026_1*.csv")
@@ -130,19 +131,11 @@ def resolve_reference_csv(config_path: Path, selected_path: Path | None) -> Path
         if selected_path:
             save_reference_configuration(config_path, candidate)
         return candidate.resolve()
-    if not sys.stdin.isatty():
-        raise FileNotFoundError("Indique el CSV original del catastro 2026_1 con --reference-csv.")
-    print("Seleccione el CSV original catastro_2026_1 para enumerar los roles.")
-    candidate = select_csv("CSV original del catastro 2026_1", Path.home())
-    if candidate is None:
-        entered = input("Ruta del CSV original (Enter para cancelar): ").strip()
-        if not entered:
-            raise FileNotFoundError("No se seleccionó el CSV original del catastro 2026_1.")
-        candidate = Path(entered)
-    if not candidate.is_file():
-        raise FileNotFoundError(f"No existe el CSV seleccionado: {candidate}")
-    save_reference_configuration(config_path, candidate)
-    return candidate.resolve()
+    if selected_path is not None:
+        raise FileNotFoundError(f"No existe el insumo histórico configurado: {candidate}")
+    if candidate is not None:
+        print(f"[AVISO] Insumo local no encontrado; se usará la descarga regional: {candidate}")
+    return None
 
 
 def publish_storage(config_path: Path, period: str | None, commune: str | None) -> int:
@@ -196,11 +189,12 @@ def _resolve_communes(args, settings, session: requests.Session):
 
 def scrape(args) -> int:
     settings = load_settings(args.config, periodo_geometria=args.periodo)
-    reference_csv = args.reference_csv
-    if not args.dry_run:
-        reference_csv = resolve_reference_csv(args.config, args.reference_csv)
     bootstrap_client = SIIClient(settings)
     communes = _resolve_communes(args, settings, bootstrap_client.session)
+    reference_csv = resolve_reference_csv(args.config, args.reference_csv)
+    regional_references: dict[str, Path] = {}
+    if not args.dry_run and reference_csv is None:
+        regional_references = ensure_regional_references(settings, communes)
     initialize_catalog(settings, settings.periodo_geometria)
     print(f"\nPeríodo geométrico: {settings.periodo_geometria}")
     print("Comunas seleccionadas: " + ", ".join(f"{item.name} ({item.sii_code})" for item in communes))
@@ -208,11 +202,14 @@ def scrape(args) -> int:
     for commune in communes:
         print(f"\n{'=' * 72}\n{commune.name} ({commune.sii_code})\n{'=' * 72}")
         try:
+            commune_reference = reference_csv
+            if not args.dry_run and commune_reference is None:
+                commune_reference = regional_references[normalize_name(commune.region)]
             manifest = process_commune(
                 commune,
                 settings,
                 force=args.force,
-                reference_csv=reference_csv,
+                reference_csv=commune_reference,
                 dry_run=args.dry_run,
                 max_supercells=args.max_supercells,
                 only_supercells=args.supercell,
@@ -262,7 +259,7 @@ def build_parser() -> argparse.ArgumentParser:
     scope.add_argument("--comuna", action="append", help="Código SII o nombre; puede repetirse")
     scope.add_argument("--region", help="Procesar todas las comunas de una región")
     scrape_parser.add_argument("--periodo", default=None, help="Snapshot, por ejemplo 2026S2")
-    scrape_parser.add_argument("--reference-csv", type=Path, help="CSV usado para enumerar roles candidatos")
+    scrape_parser.add_argument("--reference-csv", type=Path, help="CSV o Parquet histórico opcional")
     scrape_parser.add_argument("--force", action="store_true", help="Reprocesar aunque la comuna esté completa")
     scrape_parser.add_argument("--dry-run", action="store_true", help="Planificar sin descargar tiles")
     scrape_parser.add_argument("--max-supercells", type=int, help="Límite de control; deja estado parcial")

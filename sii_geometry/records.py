@@ -24,22 +24,30 @@ def find_reference_csv(raw_cadastral_dir: Path) -> Path:
 
 def extract_role_keys(reference_csv: Path, commune_code: str) -> pd.DataFrame:
     selected: list[pd.DataFrame] = []
-    for chunk in pd.read_csv(
-        reference_csv,
-        dtype={"comuna": "string", "manzana": "string", "predio": "string"},
-        usecols=["comuna", "manzana", "predio"],
-        chunksize=500_000,
-        low_memory=False,
-    ):
-        normalized_commune = chunk["comuna"].str.replace(r"\.0$", "", regex=True).str.lstrip("0")
-        match = chunk.loc[normalized_commune == str(int(commune_code)), ["manzana", "predio"]]
-        if not match.empty:
-            selected.append(match)
+    if reference_csv.suffix.lower() in {".parquet", ".pq"}:
+        roles = pd.read_parquet(
+            reference_csv,
+            columns=["comuna", "manzana", "predio"],
+            filters=[("comuna", "=", int(commune_code))],
+        )
+        selected.append(roles[["manzana", "predio"]])
+    else:
+        for chunk in pd.read_csv(
+            reference_csv,
+            dtype={"comuna": "string", "manzana": "string", "predio": "string"},
+            usecols=["comuna", "manzana", "predio"],
+            chunksize=500_000,
+            low_memory=False,
+        ):
+            normalized_commune = chunk["comuna"].str.replace(r"\.0$", "", regex=True).str.lstrip("0")
+            match = chunk.loc[normalized_commune == str(int(commune_code)), ["manzana", "predio"]]
+            if not match.empty:
+                selected.append(match)
     if not selected:
         return pd.DataFrame(columns=["manzana", "predio", "rol"])
     roles = pd.concat(selected, ignore_index=True).dropna().drop_duplicates()
     for column in ["manzana", "predio"]:
-        roles[column] = roles[column].str.replace(r"\.0$", "", regex=True).str.lstrip("0").replace("", "0")
+        roles[column] = roles[column].astype("string").str.replace(r"\.0$", "", regex=True).str.lstrip("0").replace("", "0")
     roles["rol"] = roles["manzana"] + "-" + roles["predio"]
     return roles.sort_values(["manzana", "predio"], kind="stable").reset_index(drop=True)
 

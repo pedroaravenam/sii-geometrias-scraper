@@ -55,6 +55,8 @@ def load_catalog(settings: Settings, session: requests.Session) -> list[Commune]
         Commune(str(item["id"]), str(item["nombre"]), str(item["region"]))
         for item in records
     ]
+    if not any(item.sii_code == "8108" for item in communes):
+        communes.append(Commune("8108", "Trehuaco", "Ñuble"))
     return sorted(communes, key=lambda item: (normalize_name(item.region), normalize_name(item.name)))
 
 
@@ -64,7 +66,10 @@ def load_boundary(commune: Commune, settings: Settings, session: requests.Sessio
     name_columns = [column for column in boundaries.columns if normalize_name(column) in {"COMUNA", "NOMBRE"}]
     if not name_columns:
         raise RuntimeError(f"La fuente territorial no contiene una columna de comuna: {list(boundaries.columns)}")
-    normalized_target = normalize_name(commune.name.replace("Santiago Centro", "Santiago"))
+    boundary_name = commune.name.replace("Santiago Centro", "Santiago")
+    if normalize_name(boundary_name) == "TREHUACO":
+        boundary_name = "Treguaco"
+    normalized_target = normalize_name(boundary_name)
     mask = boundaries[name_columns[0]].map(normalize_name) == normalized_target
     selected = boundaries.loc[mask]
     if selected.empty:

@@ -1,5 +1,4 @@
 {
   "storage_root": "D:\\Catastro_SII",
-  "reference_csv": "D:\\Microdatos\\catastro_2026_1.csv",
   "archive_wms_tiles": true
 }
