@@ -26,6 +26,12 @@ CATALOG_COLUMNS = [
     "roles_no_encontrados",
     "roles_error",
     "poligonos",
+    "poligonos_con_rol",
+    "poligonos_sin_rol",
+    "atribucion_poligonos_pct",
+    "roles_unicos_total",
+    "roles_unicos_con_geometria",
+    "cobertura_roles_unicos_pct",
     "filas_salida",
     "fecha_captura",
     "fecha_respaldo",
@@ -282,6 +288,16 @@ def publish_commune(settings: Settings, manifest_path: Path) -> dict[str, Any]:
             "roles_no_encontrados": api_counts.get("not_found", 0),
             "roles_error": api_counts.get("error", 0),
             "poligonos": manifest.get("vectorization", {}).get("polygons", ""),
+            "poligonos_con_rol": metrics_data.get("final_result", {}).get("polygons_with_role", ""),
+            "poligonos_sin_rol": metrics_data.get("final_result", {}).get("polygons_without_role", ""),
+            "atribucion_poligonos_pct": metrics_data.get("final_result", {}).get("polygon_attribution_pct", ""),
+            "roles_unicos_total": metrics_data.get("final_result", {}).get("unique_roles_total", ""),
+            "roles_unicos_con_geometria": metrics_data.get("final_result", {}).get(
+                "unique_roles_with_geometry", ""
+            ),
+            "cobertura_roles_unicos_pct": metrics_data.get("final_result", {}).get(
+                "unique_role_geometry_coverage_pct", ""
+            ),
             "filas_salida": metrics_data.get("output_rows", ""),
             "fecha_captura": metrics_data.get("captured_at", ""),
             "fecha_respaldo": backed_up_at,

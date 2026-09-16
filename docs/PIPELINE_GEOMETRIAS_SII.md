@@ -122,7 +122,9 @@ obtenidos desde la API y los campos técnicos:
 - Todas las superceldas planificadas fueron descargadas y leídas como PNG.
 - Todas las geometrías resultantes son válidas o quedan reportadas.
 - Cada fila conserva el método y distancia de asociación.
-- Se informan cobertura, roles sin geometría, polígonos sin rol y fallas API.
+- El cierre informa por separado la cobertura del catastro histórico y el
+  resultado completo: polígonos totales, con rol, sin rol, porcentaje de
+  atribución y roles únicos con o sin geometría.
 - El período informado por la API queda separado del período y fecha de captura.
 - Una ejecución limitada de diagnóstico nunca queda marcada como completa.
 

@@ -17,6 +17,7 @@ from sii_geometry.cli import build_parser, resolve_reference_csv
 from sii_geometry.config import load_settings
 from sii_geometry.geometry import _block_origins, merge_overlapping_polygons, vectorize_image
 from sii_geometry.matching import match_roles_to_polygons
+from sii_geometry.pipeline import summarize_final_output
 from sii_geometry.records import extract_role_keys
 from sii_geometry.reference_assets import file_sha256, validate_reference_asset
 from sii_geometry.state import checkpoint_database, read_manifest, save_api_result, write_json_atomic
@@ -105,6 +106,26 @@ class GeometryScraperTests(unittest.TestCase):
         self.assertEqual(metrics["without_geometry"], 0)
         self.assertEqual(used, {0})
         self.assertTrue(matched.geometry.notna().all())
+
+    def test_final_summary_counts_all_polygons_and_unique_roles(self):
+        output = gpd.GeoDataFrame(
+            {
+                "rol": ["1-1", "1-1", "2-1", None, "3-1"],
+            },
+            geometry=[box(0, 0, 1, 1), box(2, 0, 3, 1), box(4, 0, 5, 1), box(6, 0, 7, 1), None],
+            crs=4326,
+        )
+
+        summary = summarize_final_output(output)
+
+        self.assertEqual(summary["rows_total"], 5)
+        self.assertEqual(summary["polygons_total"], 4)
+        self.assertEqual(summary["polygons_with_role"], 3)
+        self.assertEqual(summary["polygons_without_role"], 1)
+        self.assertEqual(summary["polygon_attribution_pct"], 75.0)
+        self.assertEqual(summary["unique_roles_total"], 3)
+        self.assertEqual(summary["unique_roles_with_geometry"], 2)
+        self.assertEqual(summary["unique_roles_without_geometry"], 1)
 
     def test_overlap_merge_preserves_touching_parcels(self):
         left = box(0, 0, 10, 10)

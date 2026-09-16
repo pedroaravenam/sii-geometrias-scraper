@@ -232,6 +232,38 @@ def _load_orphan_rows(
     return gpd.GeoDataFrame(records, geometry=geometries, crs=4326)
 
 
+def summarize_final_output(output: gpd.GeoDataFrame) -> dict[str, Any]:
+    """Resume todo el resultado sin confundir filas, polígonos y roles únicos."""
+    geometry_present = output.geometry.notna()
+    if "rol" in output.columns:
+        normalized_roles = output["rol"].astype("string").str.strip()
+        role_present = normalized_roles.notna() & normalized_roles.ne("")
+    else:
+        normalized_roles = pd.Series(pd.NA, index=output.index, dtype="string")
+        role_present = pd.Series(False, index=output.index)
+
+    polygon_total = int(geometry_present.sum())
+    polygons_with_role = int((geometry_present & role_present).sum())
+    polygons_without_role = int((geometry_present & ~role_present).sum())
+    unique_roles = set(normalized_roles.loc[role_present].tolist())
+    unique_roles_with_geometry = set(normalized_roles.loc[role_present & geometry_present].tolist())
+    unique_roles_without_geometry = unique_roles - unique_roles_with_geometry
+
+    return {
+        "rows_total": int(len(output)),
+        "polygons_total": polygon_total,
+        "polygons_with_role": polygons_with_role,
+        "polygons_without_role": polygons_without_role,
+        "polygon_attribution_pct": round(polygons_with_role / polygon_total * 100, 3) if polygon_total else 0.0,
+        "unique_roles_total": len(unique_roles),
+        "unique_roles_with_geometry": len(unique_roles_with_geometry),
+        "unique_roles_without_geometry": len(unique_roles_without_geometry),
+        "unique_role_geometry_coverage_pct": (
+            round(len(unique_roles_with_geometry) / len(unique_roles) * 100, 3) if unique_roles else 0.0
+        ),
+    }
+
+
 def process_commune(
     commune: Commune,
     settings: Settings,
@@ -383,6 +415,7 @@ def process_commune(
         observed_periods = sorted(str(value) for value in output.get("periodo", pd.Series(dtype=str)).dropna().unique())
         expected_period = _expected_api_period(settings.periodo_geometria)
         unexpected_periods = [value for value in observed_periods if expected_period and value.upper() != expected_period]
+        final_result = summarize_final_output(output)
         incomplete_control = any(value is not None for value in [max_supercells, max_roles, max_orphans, only_supercells])
         observations = {
             "api_error": int(api_counts.get("error", 0)),
@@ -405,6 +438,7 @@ def process_commune(
             "vectorization": vector_metrics,
             "api": api_counts,
             "match": match_metrics,
+            "final_result": final_result,
             "observed_api_periods": observed_periods,
             "expected_api_period": expected_period,
             "observations": observations,
@@ -419,8 +453,20 @@ def process_commune(
             completed_at=utc_now(),
             metrics=str(paths["metrics"]),
             output=str(paths["output"]),
+            final_result=final_result,
             observations=observations,
             error=None,
+        )
+        print(
+            "[RESUMEN FINAL] "
+            f"{final_result['polygons_total']:,} polígonos: "
+            f"{final_result['polygons_with_role']:,} con rol y "
+            f"{final_result['polygons_without_role']:,} sin rol "
+            f"({final_result['polygon_attribution_pct']:.3f}% atribuidos). "
+            f"Roles únicos con geometría: {final_result['unique_roles_with_geometry']:,}/"
+            f"{final_result['unique_roles_total']:,} "
+            f"({final_result['unique_role_geometry_coverage_pct']:.3f}%).",
+            flush=True,
         )
         if settings.storage_root:
             try:
