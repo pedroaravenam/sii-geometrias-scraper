@@ -30,8 +30,6 @@ class Settings:
     fill_color: tuple[int, int, int]
     fill_tolerance: tuple[int, int, int]
     min_fill_alpha: int
-    catalog_url: str
-    boundaries_url: str
     wms_url: str
     api_url: str
     reference_csv: Path | None = None

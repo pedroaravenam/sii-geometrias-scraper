@@ -13,7 +13,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 from shapely.geometry import Point, box
 
-from sii_geometry.catalog import normalize_name
+from sii_geometry.catalog import ensure_reference_files, load_boundary, load_catalog, normalize_name
 from sii_geometry.cli import build_parser, resolve_reference_csv
 from sii_geometry.config import load_settings
 from sii_geometry.geometry import _block_origins, merge_overlapping_polygons, vectorize_image
@@ -36,6 +36,23 @@ class GeometryScraperTests(unittest.TestCase):
 
     def test_normalize_name_removes_accents(self):
         self.assertEqual(normalize_name("  Peñaflor "), "PENAFLOR")
+
+    def test_bundled_catalog_and_boundaries_do_not_use_network(self):
+        class NetworkMustNotBeUsed:
+            def get(self, *_args, **_kwargs):
+                raise AssertionError("Los recursos incluidos no deben usar la red")
+
+        settings = load_settings()
+        catalog_path, boundaries_path = ensure_reference_files(settings, NetworkMustNotBeUsed())
+        self.assertTrue(catalog_path.is_file())
+        self.assertTrue(boundaries_path.is_file())
+
+        catalog = load_catalog(settings, NetworkMustNotBeUsed())
+        penaflor = next(commune for commune in catalog if commune.sii_code == "14504")
+        boundary = load_boundary(penaflor, settings, NetworkMustNotBeUsed())
+
+        self.assertGreaterEqual(len(catalog), 346)
+        self.assertFalse(boundary.is_empty)
 
     def test_vectorizer_separates_cyan_parcels(self):
         settings = load_settings()
@@ -290,7 +307,7 @@ class GeometryScraperTests(unittest.TestCase):
             "file": destination.name,
             "bytes": len(payload),
             "sha256": hashlib.sha256(payload).hexdigest(),
-            "urls": ["https://drive.example/primary", "https://github.example/fallback"],
+            "urls": ["https://drive.example/primary", "https://drive-backup.example/fallback"],
         }
 
         _download_asset(session, asset, destination)

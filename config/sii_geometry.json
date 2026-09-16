@@ -15,8 +15,6 @@
   "fill_color": [182, 221, 232],
   "fill_tolerance": [20, 22, 22],
   "min_fill_alpha": 20,
-  "catalog_url": "https://raw.githubusercontent.com/crishernandezmaps/catastral.cl/main/comunas_sii.json",
-  "boundaries_url": "https://raw.githubusercontent.com/fcortes/Chile-GeoJSON/master/comunas.geojson",
   "wms_url": "https://www4.sii.cl/mapasui/services/ui/wmsProxyService/call",
   "api_url": "https://www4.sii.cl/mapasui/services/data/mapasFacadeService"
 }

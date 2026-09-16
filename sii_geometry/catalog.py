@@ -29,22 +29,18 @@ def normalize_name(value: str) -> str:
     return " ".join(normalized.encode("ascii", "ignore").decode("ascii").upper().split())
 
 
-def _download(session: requests.Session, url: str, destination: Path, timeout: float) -> None:
-    response = session.get(url, timeout=timeout)
-    response.raise_for_status()
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_suffix(destination.suffix + ".part")
-    temporary.write_bytes(response.content)
-    temporary.replace(destination)
-
-
 def ensure_reference_files(settings: Settings, session: requests.Session) -> tuple[Path, Path]:
-    catalog_path = settings.reference_root / "comunas_sii.json"
-    boundaries_path = settings.reference_root / "limites_comunales.geojson"
-    if not catalog_path.exists():
-        _download(session, settings.catalog_url, catalog_path, settings.request_timeout_s)
-    if not boundaries_path.exists():
-        _download(session, settings.boundaries_url, boundaries_path, settings.request_timeout_s)
+    del session
+    reference_root = settings.repository_root / "resources" / "reference"
+    catalog_path = reference_root / "comunas_sii.json"
+    boundaries_path = reference_root / "limites_comunales.geojson"
+    missing = [path.name for path in (catalog_path, boundaries_path) if not path.is_file()]
+    if missing:
+        names = ", ".join(missing)
+        raise RuntimeError(
+            f"La copia del programa está incompleta: faltan {names} en {reference_root}. "
+            "Vuelva a extraer el ZIP completo."
+        )
     return catalog_path, boundaries_path
 
 
