@@ -8,12 +8,26 @@ GeoParquet por comuna. La captura queda identificada como `2026S2`.
 
 - Windows 10 u 11.
 - Python 3.11 o superior.
-- Git, sólo para clonar y actualizar el repositorio.
 - Conexión a internet.
+
+Git no es necesario para ejecutar el programa.
 
 ## Instalación y ejecución
 
-Abra `cmd` o PowerShell y ejecute:
+### Opción simple, sin Git
+
+1. Descargue el programa desde
+   [este archivo ZIP](https://github.com/pedroaravenam/sii-geometrias-scraper/archive/refs/heads/main.zip).
+2. Extraiga completamente el ZIP en una carpeta local.
+3. Abra la carpeta `sii-geometrias-scraper-main`.
+4. Ejecute `SCRAPEAR_GEOMETRIAS.cmd` con doble clic.
+
+No ejecute el archivo directamente dentro del ZIP: primero debe extraer la
+carpeta completa.
+
+### Alternativa con Git
+
+Si Git está disponible, abra `cmd` o PowerShell y ejecute:
 
 ```bat
 git clone https://github.com/pedroaravenam/sii-geometrias-scraper.git
