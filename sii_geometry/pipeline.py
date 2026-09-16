@@ -243,6 +243,7 @@ def process_commune(
     only_supercells: list[tuple[int, int]] | None = None,
     max_roles: int | None = None,
     max_orphans: int | None = None,
+    rematch: bool = False,
 ) -> dict[str, Any]:
     paths = _paths(settings, commune)
     current = read_manifest(paths["manifest"])
@@ -254,7 +255,7 @@ def process_commune(
         and bool(current.get("vectorization"))
         and current.get("supercells_downloaded") == current.get("supercells_planned")
     )
-    if not force and current.get("status") in TERMINAL_STATUSES and paths["output"].exists():
+    if not force and not rematch and current.get("status") in TERMINAL_STATUSES and paths["output"].exists():
         if settings.storage_root:
             try:
                 published = publish_commune(settings, paths["manifest"])
@@ -271,7 +272,13 @@ def process_commune(
     paths["raw"].mkdir(parents=True, exist_ok=True)
     paths["tiles"].mkdir(parents=True, exist_ok=True)
     paths["output"].parent.mkdir(parents=True, exist_ok=True)
-    _update_manifest(paths["manifest"], manifest, status="planificando")
+    _update_manifest(
+        paths["manifest"],
+        manifest,
+        status="planificando",
+        error=None,
+        rematch_requested=rematch,
+    )
 
     try:
         plan, all_supercells, boundary = plan_commune(commune, settings, client)
@@ -413,6 +420,7 @@ def process_commune(
             metrics=str(paths["metrics"]),
             output=str(paths["output"]),
             observations=observations,
+            error=None,
         )
         if settings.storage_root:
             try:

@@ -51,6 +51,13 @@ O una región completa:
 .\SCRAPEAR_GEOMETRIAS.cmd --region "Metropolitana de Santiago"
 ```
 
+Si una actualización cambia la lógica de asociación, puede recalcular el vínculo
+entre roles y polígonos reutilizando los tiles, vectores y respuestas guardadas:
+
+```bat
+.\SCRAPEAR_GEOMETRIAS.cmd --comuna 5101 --rematch
+```
+
 Si ya dispone del catastro original en CSV o Parquet, puede usarlo en vez de la
 descarga automática:
 

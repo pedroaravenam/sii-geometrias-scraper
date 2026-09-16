@@ -215,6 +215,7 @@ def scrape(args) -> int:
                 only_supercells=args.supercell,
                 max_roles=args.max_roles,
                 max_orphans=args.max_orphans,
+                rematch=args.rematch,
             )
             print(f"Estado: {manifest.get('status')}")
         except KeyboardInterrupt:
@@ -261,6 +262,11 @@ def build_parser() -> argparse.ArgumentParser:
     scrape_parser.add_argument("--periodo", default=None, help="Snapshot, por ejemplo 2026S2")
     scrape_parser.add_argument("--reference-csv", type=Path, help="CSV o Parquet histórico opcional")
     scrape_parser.add_argument("--force", action="store_true", help="Reprocesar aunque la comuna esté completa")
+    scrape_parser.add_argument(
+        "--rematch",
+        action="store_true",
+        help="Recalcular asociaciones reutilizando tiles, polígonos y respuestas existentes",
+    )
     scrape_parser.add_argument("--dry-run", action="store_true", help="Planificar sin descargar tiles")
     scrape_parser.add_argument("--max-supercells", type=int, help="Límite de control; deja estado parcial")
     scrape_parser.add_argument(

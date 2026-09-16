@@ -13,7 +13,7 @@ import pyarrow.parquet as pq
 from shapely.geometry import Point, box
 
 from sii_geometry.catalog import normalize_name
-from sii_geometry.cli import resolve_reference_csv
+from sii_geometry.cli import build_parser, resolve_reference_csv
 from sii_geometry.config import load_settings
 from sii_geometry.geometry import _block_origins, merge_overlapping_polygons, vectorize_image
 from sii_geometry.matching import match_roles_to_polygons
@@ -27,6 +27,11 @@ TEST_TMP_ROOT = Path(__file__).resolve().parents[1] / ".tmp"
 
 
 class GeometryScraperTests(unittest.TestCase):
+    def test_cli_accepts_rematch_without_force(self):
+        args = build_parser().parse_args(["scrape", "--comuna", "5101", "--rematch"])
+        self.assertTrue(args.rematch)
+        self.assertFalse(args.force)
+
     def test_normalize_name_removes_accents(self):
         self.assertEqual(normalize_name("  Peñaflor "), "PENAFLOR")
 
@@ -75,6 +80,30 @@ class GeometryScraperTests(unittest.TestCase):
         self.assertEqual(metrics["point_in_polygon"], 1)
         self.assertEqual(metrics["nearest_10m"], 1)
         self.assertEqual(len(used), 2)
+        self.assertTrue(matched.geometry.notna().all())
+
+    def test_match_supports_chilean_insular_longitudes(self):
+        polygons = gpd.GeoDataFrame(
+            {"_poly_idx": [0], "pol_area_m2": [100]},
+            geometry=[box(-109.441, -27.164, -109.439, -27.162)],
+            crs=4326,
+        )
+        roles = pd.DataFrame(
+            {
+                "rol": ["101-1"],
+                "manzana": ["101"],
+                "predio": ["1"],
+                "lat": [-27.162712],
+                "lon": [-109.440281],
+                "direccion_sii": ["RAPA NUI"],
+            }
+        )
+
+        matched, used, metrics = match_roles_to_polygons(roles, polygons)
+
+        self.assertEqual(metrics["point_in_polygon"], 1)
+        self.assertEqual(metrics["without_geometry"], 0)
+        self.assertEqual(used, {0})
         self.assertTrue(matched.geometry.notna().all())
 
     def test_overlap_merge_preserves_touching_parcels(self):

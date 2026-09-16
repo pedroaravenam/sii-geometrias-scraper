@@ -28,7 +28,9 @@ def match_roles_to_polygons(
     tree = STRtree(polygons_3857.geometry.values)
     lat = pd.to_numeric(roles.get("lat"), errors="coerce")
     lon = pd.to_numeric(roles.get("lon"), errors="coerce")
-    valid = lat.between(-62, -17) & lon.between(-80, -64)
+    # Valida coordenadas geográficas, no sólo el Chile continental. El SII
+    # también publica predios de territorios insulares como Rapa Nui (~-109°).
+    valid = lat.between(-90, 90) & lon.between(-180, 180)
     points = gpd.GeoSeries(
         [Point(x, y) if ok else None for x, y, ok in zip(lon, lat, valid)], crs=4326
     ).to_crs(3857)
