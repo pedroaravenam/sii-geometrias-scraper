@@ -243,6 +243,7 @@ def publish_commune(settings: Settings, manifest_path: Path) -> dict[str, Any]:
         previous_backup.get("status") == "completo"
         and previous_backup.get("root") == str(settings.storage_root)
         and all(path.exists() for path in expected_remote)
+        and previous_backup.get("geoparquet_sha256") == _sha256(output)
         and previous_backup.get("geoparquet_sha256") == _sha256(remote_output)
     ):
         return {"root": settings.storage_root, "geoparquet": remote_output, "catalog": catalog}

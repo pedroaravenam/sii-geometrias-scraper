@@ -274,6 +274,11 @@ class GeometryScraperTests(unittest.TestCase):
         )
         with sqlite3.connect(central / "2026S2" / "checkpoints" / "14504_penaflor.sqlite") as connection:
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM api_results").fetchone()[0], 1)
+        connection.close()
+
+        output.write_bytes(b"updated-geoparquet")
+        publish_commune(settings, manifest_path)
+        self.assertEqual(result["geoparquet"].read_bytes(), b"updated-geoparquet")
 
 
 if __name__ == "__main__":
