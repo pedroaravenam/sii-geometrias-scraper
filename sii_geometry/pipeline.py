@@ -430,6 +430,13 @@ def process_commune(
             "api_error": int(api_counts.get("error", 0)),
             "api_not_found": int(api_counts.get("not_found", 0)),
             "roles_without_geometry": int(match_metrics["without_geometry"]),
+            "current_roles_without_published_geometry": int(
+                match_metrics["current_without_published_geometry"]
+            ),
+            "current_roles_with_coordinates_unmatched": int(
+                match_metrics["current_with_coordinates_unmatched"]
+            ),
+            "roles_not_found_current_period": int(match_metrics["not_found_current_period"]),
             "unmatched_polygons": int((output["calidad_geom"] == "poligono_sin_rol").sum()),
             "invalid_geometries": int((output.geometry.notna() & ~output.geometry.is_valid).sum()),
             "large_components": int((output.get("pol_size_class") == "large_component").sum()),
@@ -474,7 +481,9 @@ def process_commune(
             f"({final_result['polygon_attribution_pct']:.3f}% atribuidos). "
             f"Roles únicos con geometría: {final_result['unique_roles_with_geometry']:,}/"
             f"{final_result['unique_roles_total']:,} "
-            f"({final_result['unique_role_geometry_coverage_pct']:.3f}%).",
+            f"({final_result['unique_role_geometry_coverage_pct']:.3f}%). "
+            f"Vigentes sin visualización SII: {match_metrics['current_without_published_geometry']:,}; "
+            f"no encontrados en el período actual: {match_metrics['not_found_current_period']:,}.",
             flush=True,
         )
         if settings.storage_root:

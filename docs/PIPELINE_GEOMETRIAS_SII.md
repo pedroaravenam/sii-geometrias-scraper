@@ -111,6 +111,10 @@ obtenidos desde la API y los campos técnicos:
 - Cambios de color o transparencia del WMS: se estima el color dominante y se
   registran color y proporción de píxeles por bloque.
 - Roles eliminados desde 2026S1: quedan como consulta `not_found`.
+- Roles vigentes que el visor del SII no puede representar conservan todos sus
+  datos y la llave histórica, con calidad `vigente_sin_visualizacion_sii`.
+- Los roles ausentes del período actual se distinguen como
+  `rol_no_encontrado_periodo_actual`; no se mezclan con los vigentes sin dibujo.
 - Roles nuevos en 2026S2: se intentan recuperar desde polígonos huérfanos.
 - Copropiedades: se permiten varios registros asociados a un mismo polígono o rol.
 - Caídas, límites de tasa y cortes de red: reintentos exponenciales y checkpoints.

@@ -25,6 +25,8 @@ CATALOG_COLUMNS = [
     "roles_ok",
     "roles_no_encontrados",
     "roles_error",
+    "roles_vigentes_sin_visualizacion",
+    "roles_con_coordenada_sin_geometria",
     "poligonos",
     "poligonos_con_rol",
     "poligonos_sin_rol",
@@ -287,6 +289,12 @@ def publish_commune(settings: Settings, manifest_path: Path) -> dict[str, Any]:
             "roles_ok": api_counts.get("ok", 0),
             "roles_no_encontrados": api_counts.get("not_found", 0),
             "roles_error": api_counts.get("error", 0),
+            "roles_vigentes_sin_visualizacion": metrics_data.get("match", {}).get(
+                "current_without_published_geometry", ""
+            ),
+            "roles_con_coordenada_sin_geometria": metrics_data.get("match", {}).get(
+                "current_with_coordinates_unmatched", ""
+            ),
             "poligonos": manifest.get("vectorization", {}).get("polygons", ""),
             "poligonos_con_rol": metrics_data.get("final_result", {}).get("polygons_with_role", ""),
             "poligonos_sin_rol": metrics_data.get("final_result", {}).get("polygons_without_role", ""),

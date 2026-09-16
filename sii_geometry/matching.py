@@ -94,6 +94,18 @@ def match_roles_to_polygons(
         "predio_con_dibujo",
         np.where(roles["_poly_idx"] >= 0, "dibujo_impreciso", "sin_dibujo"),
     )
+    status = roles.get("_status", pd.Series("", index=roles.index)).astype("string")
+    without_geometry = roles["_poly_idx"] < 0
+    roles.loc[without_geometry & status.eq("ok") & ~valid, "calidad_geom"] = (
+        "vigente_sin_visualizacion_sii"
+    )
+    roles.loc[without_geometry & status.eq("ok") & valid, "calidad_geom"] = (
+        "vigente_con_coordenada_sin_geometria"
+    )
+    roles.loc[without_geometry & status.eq("not_found"), "calidad_geom"] = (
+        "rol_no_encontrado_periodo_actual"
+    )
+    roles.loc[without_geometry & status.eq("error"), "calidad_geom"] = "consulta_sii_error"
     roles.loc[roles["pol_size_class"] == "large_component", "calidad_geom"] = "componente_grande_revision"
     result = gpd.GeoDataFrame(roles, geometry=geometry, crs=4326)
     used = set(int(value) for value in poly_index if value >= 0)
@@ -105,6 +117,16 @@ def match_roles_to_polygons(
         "coord_inheritance": int((method == "coord_inheritance").sum()),
         "address_inheritance": int((method == "address_inheritance").sum()),
         "without_geometry": int((poly_index < 0).sum()),
+        "current_without_published_geometry": int(
+            (roles["calidad_geom"] == "vigente_sin_visualizacion_sii").sum()
+        ),
+        "current_with_coordinates_unmatched": int(
+            (roles["calidad_geom"] == "vigente_con_coordenada_sin_geometria").sum()
+        ),
+        "not_found_current_period": int(
+            (roles["calidad_geom"] == "rol_no_encontrado_periodo_actual").sum()
+        ),
+        "api_error_without_geometry": int((roles["calidad_geom"] == "consulta_sii_error").sum()),
         "coverage_pct": round(float((poly_index >= 0).sum() / total * 100), 3) if total else 0.0,
     }
     return result, used, metrics

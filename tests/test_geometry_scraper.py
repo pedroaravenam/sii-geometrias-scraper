@@ -107,6 +107,36 @@ class GeometryScraperTests(unittest.TestCase):
         self.assertEqual(used, {0})
         self.assertTrue(matched.geometry.notna().all())
 
+    def test_unmatched_roles_are_classified_by_current_sii_status(self):
+        polygons = gpd.GeoDataFrame(
+            {"_poly_idx": [0], "pol_area_m2": [100]},
+            geometry=[box(-109.441, -27.164, -109.439, -27.162)],
+            crs=4326,
+        )
+        roles = pd.DataFrame(
+            {
+                "rol": ["1-1", "2-1", "3-1", "4-1", "5-1"],
+                "manzana": ["1", "2", "3", "4", "5"],
+                "predio": ["1"] * 5,
+                "lat": [-27.163, None, None, None, -27.2],
+                "lon": [-109.440, None, None, None, -109.5],
+                "direccion_sii": [None] * 5,
+                "_status": ["ok", "ok", "not_found", "error", "ok"],
+            }
+        )
+
+        matched, _, metrics = match_roles_to_polygons(roles, polygons)
+        quality = matched.set_index("rol")["calidad_geom"].to_dict()
+
+        self.assertEqual(quality["2-1"], "vigente_sin_visualizacion_sii")
+        self.assertEqual(quality["3-1"], "rol_no_encontrado_periodo_actual")
+        self.assertEqual(quality["4-1"], "consulta_sii_error")
+        self.assertEqual(quality["5-1"], "vigente_con_coordenada_sin_geometria")
+        self.assertEqual(metrics["current_without_published_geometry"], 1)
+        self.assertEqual(metrics["not_found_current_period"], 1)
+        self.assertEqual(metrics["api_error_without_geometry"], 1)
+        self.assertEqual(metrics["current_with_coordinates_unmatched"], 1)
+
     def test_final_summary_counts_all_polygons_and_unique_roles(self):
         output = gpd.GeoDataFrame(
             {
