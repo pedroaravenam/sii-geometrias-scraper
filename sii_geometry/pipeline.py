@@ -242,15 +242,24 @@ def summarize_final_output(output: gpd.GeoDataFrame) -> dict[str, Any]:
         normalized_roles = pd.Series(pd.NA, index=output.index, dtype="string")
         role_present = pd.Series(False, index=output.index)
 
-    polygon_total = int(geometry_present.sum())
-    polygons_with_role = int((geometry_present & role_present).sum())
-    polygons_without_role = int((geometry_present & ~role_present).sum())
+    geometry_rows = output.loc[geometry_present].copy()
+    geometry_rows["_has_role_for_summary"] = role_present.loc[geometry_present].to_numpy()
+    if "_poly_idx" in geometry_rows.columns and geometry_rows["_poly_idx"].notna().any():
+        polygon_roles = geometry_rows.loc[geometry_rows["_poly_idx"].notna()].groupby("_poly_idx")[
+            "_has_role_for_summary"
+        ].any()
+    else:
+        polygon_roles = geometry_rows["_has_role_for_summary"]
+    polygon_total = int(len(polygon_roles))
+    polygons_with_role = int(polygon_roles.sum())
+    polygons_without_role = polygon_total - polygons_with_role
     unique_roles = set(normalized_roles.loc[role_present].tolist())
     unique_roles_with_geometry = set(normalized_roles.loc[role_present & geometry_present].tolist())
     unique_roles_without_geometry = unique_roles - unique_roles_with_geometry
 
     return {
         "rows_total": int(len(output)),
+        "rows_with_geometry": int(geometry_present.sum()),
         "polygons_total": polygon_total,
         "polygons_with_role": polygons_with_role,
         "polygons_without_role": polygons_without_role,
