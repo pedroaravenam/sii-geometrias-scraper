@@ -40,10 +40,13 @@ En la primera ejecución el programa:
 1. Crea `.venv` e instala automáticamente las dependencias.
 2. Abre un selector para elegir una carpeta local, OneDrive o Google Drive donde guardar resultados.
 3. Permite seleccionar una región y una o más comunas.
-4. Descarga automáticamente el Parquet histórico completo de la región seleccionada.
+4. Descarga automáticamente desde Google Drive el Parquet histórico completo de
+   la región seleccionada. Si Drive no está disponible, intenta GitHub como respaldo.
 
 Los insumos corresponden al catastro `2026S1`, conservan sus 39 columnas y se
 publican separadamente por región en el
+[carpeta pública de Google Drive](https://drive.google.com/drive/folders/1mIjnsXy3t7xs3BR-sDdlg1F8wBNqUrBp?usp=sharing),
+con una copia de respaldo en el
 [release catastro-2026S1](https://github.com/pedroaravenam/sii-geometrias-scraper/releases/tag/catastro-2026S1).
 El programa verifica tamaño, SHA-256, esquema, número de filas y presencia de las
 comunas solicitadas. Después reutiliza el archivo guardado en

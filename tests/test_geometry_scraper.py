@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import unittest
 import json
 import sqlite3
@@ -19,7 +20,7 @@ from sii_geometry.geometry import _block_origins, merge_overlapping_polygons, ve
 from sii_geometry.matching import match_roles_to_polygons
 from sii_geometry.pipeline import summarize_final_output
 from sii_geometry.records import extract_role_keys
-from sii_geometry.reference_assets import file_sha256, validate_reference_asset
+from sii_geometry.reference_assets import _download_asset, file_sha256, validate_reference_asset
 from sii_geometry.state import checkpoint_database, read_manifest, save_api_result, write_json_atomic
 from sii_geometry.storage import publish_commune, save_storage_configuration
 
@@ -251,6 +252,52 @@ class GeometryScraperTests(unittest.TestCase):
         validate_reference_asset(reference, asset, parquet.schema.names, ["14504"])
         with self.assertRaises(ValueError):
             validate_reference_asset(reference, {**asset, "sha256": "0" * 64}, parquet.schema.names)
+
+    def test_regional_asset_download_uses_fallback_and_verifies_hash(self):
+        root = TEST_TMP_ROOT / "unit_asset_download"
+        root.mkdir(parents=True, exist_ok=True)
+        destination = root / "region.parquet"
+        payload = b"PAR1-valid-test-payload"
+
+        class FakeResponse:
+            def __init__(self, body):
+                self.body = body
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def raise_for_status(self):
+                return None
+
+            def iter_content(self, chunk_size):
+                del chunk_size
+                yield self.body
+
+        class FakeSession:
+            def __init__(self):
+                self.calls = []
+
+            def get(self, url, **_kwargs):
+                self.calls.append(url)
+                return FakeResponse(b"bad" if len(self.calls) == 1 else payload)
+
+        session = FakeSession()
+        asset = {
+            "region": "Prueba",
+            "file": destination.name,
+            "bytes": len(payload),
+            "sha256": hashlib.sha256(payload).hexdigest(),
+            "urls": ["https://drive.example/primary", "https://github.example/fallback"],
+        }
+
+        _download_asset(session, asset, destination)
+
+        self.assertEqual(destination.read_bytes(), payload)
+        self.assertEqual(session.calls, asset["urls"])
+        self.assertFalse(destination.with_suffix(".parquet.part").exists())
 
     def test_publish_commune_creates_central_package_and_catalog(self):
         root = TEST_TMP_ROOT / "unit_storage"

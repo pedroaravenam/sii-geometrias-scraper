@@ -50,7 +50,10 @@
       "region": "Antofagasta",
       "slug": "antofagasta",
       "file": "catastro_2026S1_antofagasta.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_antofagasta.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1tArDkTzveDILOvUI8roIQwSFyPpT2jKV&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_antofagasta.parquet"
+      ],
       "bytes": 13168699,
       "rows": 262883,
       "columns": 39,
@@ -60,7 +63,10 @@
       "region": "Araucanía",
       "slug": "araucania",
       "file": "catastro_2026S1_araucania.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_araucania.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1XlUArJ1W-1pLTdnDN9ztjuk9UOzHhHXc&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_araucania.parquet"
+      ],
       "bytes": 29131537,
       "rows": 589807,
       "columns": 39,
@@ -70,7 +76,10 @@
       "region": "Arica y Parinacota",
       "slug": "arica_y_parinacota",
       "file": "catastro_2026S1_arica_y_parinacota.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_arica_y_parinacota.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1DzKHH13Jg55xaC-pwfc6I8eRCmJD3UmZ&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_arica_y_parinacota.parquet"
+      ],
       "bytes": 4806402,
       "rows": 90083,
       "columns": 39,
@@ -80,7 +89,10 @@
       "region": "Atacama",
       "slug": "atacama",
       "file": "catastro_2026S1_atacama.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_atacama.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1LefKBQdunOode4uCh0JdtYRM4VadQm9F&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_atacama.parquet"
+      ],
       "bytes": 6925158,
       "rows": 129763,
       "columns": 39,
@@ -90,7 +102,10 @@
       "region": "Aysén",
       "slug": "aysen",
       "file": "catastro_2026S1_aysen.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_aysen.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=11uCLNQuUOa_r2E5XR5dxbn7A84dGR2XK&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_aysen.parquet"
+      ],
       "bytes": 3759416,
       "rows": 70783,
       "columns": 39,
@@ -100,7 +115,10 @@
       "region": "Biobío",
       "slug": "biobio",
       "file": "catastro_2026S1_biobio.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_biobio.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1rJeaLrtO9ko8WPeVyHwF2DB9qoFpq3CC&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_biobio.parquet"
+      ],
       "bytes": 39096773,
       "rows": 773083,
       "columns": 39,
@@ -110,7 +128,10 @@
       "region": "Coquimbo",
       "slug": "coquimbo",
       "file": "catastro_2026S1_coquimbo.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_coquimbo.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1zUvt95LA4u4_V8qCsM56vGXsYBeT0QmG&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_coquimbo.parquet"
+      ],
       "bytes": 22427794,
       "rows": 444591,
       "columns": 39,
@@ -120,7 +141,10 @@
       "region": "Los Lagos",
       "slug": "los_lagos",
       "file": "catastro_2026S1_los_lagos.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_los_lagos.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1lb-6jmJY0Maab9KdVSZ-14l_2NA1Av8U&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_los_lagos.parquet"
+      ],
       "bytes": 23139043,
       "rows": 497511,
       "columns": 39,
@@ -130,7 +154,10 @@
       "region": "Los Ríos",
       "slug": "los_rios",
       "file": "catastro_2026S1_los_rios.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_los_rios.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=12sk-OLnD2zSE9LJPfP2hhX5uSLErec-n&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_los_rios.parquet"
+      ],
       "bytes": 9750326,
       "rows": 195036,
       "columns": 39,
@@ -140,7 +167,10 @@
       "region": "Magallanes",
       "slug": "magallanes",
       "file": "catastro_2026S1_magallanes.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_magallanes.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1Zzd7oRfwqeuZEo-iqgPyGNELzNaUTh9-&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_magallanes.parquet"
+      ],
       "bytes": 4399988,
       "rows": 79595,
       "columns": 39,
@@ -150,7 +180,10 @@
       "region": "Maule",
       "slug": "maule",
       "file": "catastro_2026S1_maule.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_maule.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1mQEa266Thwh1eCYtIyV7oXcZ79tXDkwv&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_maule.parquet"
+      ],
       "bytes": 31364563,
       "rows": 655396,
       "columns": 39,
@@ -160,7 +193,10 @@
       "region": "Metropolitana",
       "slug": "metropolitana",
       "file": "catastro_2026S1_metropolitana.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_metropolitana.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1z3itXHwncY7ZhoPl681Zx6EX2DXc59wf&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_metropolitana.parquet"
+      ],
       "bytes": 175913077,
       "rows": 3723206,
       "columns": 39,
@@ -170,7 +206,10 @@
       "region": "Ñuble",
       "slug": "nuble",
       "file": "catastro_2026S1_nuble.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_nuble.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1dfnpATYJdcMDWHiAtCVa3oDLFyp2xNLY&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_nuble.parquet"
+      ],
       "bytes": 13403045,
       "rows": 325127,
       "columns": 39,
@@ -180,7 +219,10 @@
       "region": "O'Higgins",
       "slug": "o_higgins",
       "file": "catastro_2026S1_o_higgins.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_o_higgins.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1undjI5aazXI9V1_CSzORSHW8gyk_6JSg&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_o_higgins.parquet"
+      ],
       "bytes": 24832133,
       "rows": 495472,
       "columns": 39,
@@ -190,7 +232,10 @@
       "region": "Tarapacá",
       "slug": "tarapaca",
       "file": "catastro_2026S1_tarapaca.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_tarapaca.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1uLfK7daZ7JP4ifejr04LeExaKB6wKpaW&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_tarapaca.parquet"
+      ],
       "bytes": 7693179,
       "rows": 155693,
       "columns": 39,
@@ -200,7 +245,10 @@
       "region": "Valparaíso",
       "slug": "valparaiso",
       "file": "catastro_2026S1_valparaiso.parquet",
-      "url": "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_valparaiso.parquet",
+      "urls": [
+        "https://drive.usercontent.google.com/download?id=1nCyea_i-eq0soyUuDa6C7qnzixj2MPJc&export=download&confirm=t",
+        "https://github.com/pedroaravenam/sii-geometrias-scraper/releases/download/catastro-2026S1/catastro_2026S1_valparaiso.parquet"
+      ],
       "bytes": 52886391,
       "rows": 1040449,
       "columns": 39,

@@ -5,6 +5,7 @@ import json
 import shutil
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import urlparse
 
 import pyarrow.parquet as pq
 import requests
@@ -51,6 +52,22 @@ def validate_reference_asset(
             raise ValueError(f"El insumo {path.name} no contiene la comuna {code}")
 
 
+def _asset_urls(asset: dict[str, Any]) -> list[str]:
+    configured = asset.get("urls")
+    if configured is None:
+        configured = [asset["url"]]
+    elif isinstance(configured, str):
+        configured = [configured]
+    urls = list(dict.fromkeys(str(url).strip() for url in configured if str(url).strip()))
+    if not urls:
+        raise ValueError(f"El insumo {asset['file']} no tiene fuentes de descarga")
+    return urls
+
+
+def _source_name(url: str) -> str:
+    return urlparse(url).hostname or "fuente configurada"
+
+
 def _download_asset(session: requests.Session, asset: dict[str, Any], destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     required = int(asset["bytes"])
@@ -59,21 +76,49 @@ def _download_asset(session: requests.Session, asset: dict[str, Any], destinatio
     temporary = destination.with_suffix(destination.suffix + ".part")
     if temporary.exists():
         temporary.unlink()
-    print(f"Descargando insumo histórico {asset['region']} ({required / 1_000_000:.1f} MB)...", flush=True)
-    downloaded = 0
-    next_report = 10 * 1024 * 1024
-    with session.get(asset["url"], stream=True, timeout=(15, 180)) as response:
-        response.raise_for_status()
-        with temporary.open("wb") as output:
-            for chunk in response.iter_content(chunk_size=1024 * 1024):
-                if not chunk:
-                    continue
-                output.write(chunk)
-                downloaded += len(chunk)
-                if downloaded >= next_report or downloaded == required:
-                    print(f"    Insumo: {downloaded / 1_000_000:.1f}/{required / 1_000_000:.1f} MB", flush=True)
-                    next_report += 10 * 1024 * 1024
-    temporary.replace(destination)
+    errors: list[str] = []
+    last_error: Exception | None = None
+    urls = _asset_urls(asset)
+    for index, url in enumerate(urls, start=1):
+        source = _source_name(url)
+        print(
+            f"Descargando insumo histórico {asset['region']} "
+            f"({required / 1_000_000:.1f} MB) desde {source}...",
+            flush=True,
+        )
+        downloaded = 0
+        next_report = 10 * 1024 * 1024
+        try:
+            with session.get(url, stream=True, timeout=(15, 180)) as response:
+                response.raise_for_status()
+                with temporary.open("wb") as output:
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if not chunk:
+                            continue
+                        output.write(chunk)
+                        downloaded += len(chunk)
+                        if downloaded >= next_report or downloaded == required:
+                            print(
+                                f"    Insumo: {downloaded / 1_000_000:.1f}/"
+                                f"{required / 1_000_000:.1f} MB",
+                                flush=True,
+                            )
+                            next_report += 10 * 1024 * 1024
+            if downloaded != required:
+                raise ValueError(f"se recibieron {downloaded} bytes; se esperaban {required}")
+            if file_sha256(temporary) != asset["sha256"]:
+                raise ValueError("el checksum SHA-256 no coincide")
+            temporary.replace(destination)
+            return
+        except (OSError, ValueError, requests.RequestException) as error:
+            last_error = error
+            errors.append(f"{source}: {error}")
+            if temporary.exists():
+                temporary.unlink()
+            if index < len(urls):
+                print(f"[AVISO] Falló {source}; probando fuente alternativa...", flush=True)
+    details = "; ".join(errors)
+    raise RuntimeError(f"No fue posible descargar {asset['file']}. {details}") from last_error
 
 
 def ensure_regional_references(
