@@ -4,7 +4,7 @@
 
 ## Resumen
 - Fecha: 2026-09-23
-- Último commit: `689d67e` — fix: bundle static reference files
+- Último commit: `4809f84` — Retry failed WMS supercells in a deferred second pass
 - ¿Publicado?: Sí, sincronizado con origin/main en GitHub. Herramienta local CLI sin despliegue a servidor. Hay cambios locales no commiteados del usuario en pipeline, tests y documentación.
 
 ## Entorno
