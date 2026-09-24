@@ -6,6 +6,7 @@ import json
 import sqlite3
 from dataclasses import replace
 from pathlib import Path
+from unittest.mock import patch
 
 import geopandas as gpd
 import numpy as np
@@ -13,12 +14,12 @@ import pandas as pd
 import pyarrow.parquet as pq
 from shapely.geometry import Point, box
 
-from sii_geometry.catalog import ensure_reference_files, load_boundary, load_catalog, normalize_name
+from sii_geometry.catalog import Commune, ensure_reference_files, load_boundary, load_catalog, normalize_name
 from sii_geometry.cli import build_parser, resolve_reference_csv
 from sii_geometry.config import load_settings
 from sii_geometry.geometry import _block_origins, merge_overlapping_polygons, vectorize_image
 from sii_geometry.matching import match_roles_to_polygons
-from sii_geometry.pipeline import summarize_final_output
+from sii_geometry.pipeline import _download_planned_supercells, summarize_final_output
 from sii_geometry.records import extract_role_keys
 from sii_geometry.reference_assets import _download_asset, file_sha256, validate_reference_asset
 from sii_geometry.state import checkpoint_database, read_manifest, save_api_result, write_json_atomic
@@ -33,6 +34,43 @@ class GeometryScraperTests(unittest.TestCase):
         args = build_parser().parse_args(["scrape", "--comuna", "5101", "--rematch"])
         self.assertTrue(args.rematch)
         self.assertFalse(args.force)
+
+    def test_wms_download_defers_failure_and_recovers_after_scanning(self):
+        root = TEST_TMP_ROOT / "unit_wms_recovery"
+        manifest_path = root / "manifest.json"
+        paths = {"tiles": root / "tiles", "manifest": manifest_path}
+        settings = load_settings()
+        commune = Commune("2201", "Antofagasta", "Antofagasta")
+        cells = [(0, 0), (4, 0), (8, 0)]
+        calls: list[tuple[int, int]] = []
+        failed_once = False
+
+        def fake_download(_client, _code, _layer, sc_x, sc_y, _destination, _settings, *, force):
+            nonlocal failed_once
+            del force
+            calls.append((sc_x, sc_y))
+            if (sc_x, sc_y) == (4, 0) and not failed_once:
+                failed_once = True
+                raise RuntimeError("500 temporal")
+
+        manifest: dict[str, object] = {}
+        with patch("sii_geometry.pipeline.download_supercell", side_effect=fake_download):
+            _download_planned_supercells(
+                object(),
+                commune,
+                "sii:test",
+                cells,
+                paths,
+                settings,
+                manifest,
+                force=False,
+            )
+
+        self.assertEqual(calls, [(0, 0), (4, 0), (8, 0), (4, 0)])
+        stored = read_manifest(manifest_path)
+        self.assertEqual(stored["supercells_downloaded"], 3)
+        self.assertEqual(stored["wms_supercells_scanned"], 3)
+        self.assertEqual(stored["wms_pending_supercells"], [])
 
     def test_normalize_name_removes_accents(self):
         self.assertEqual(normalize_name("  Peñaflor "), "PENAFLOR")

@@ -98,6 +98,118 @@ def _update_manifest(path: Path, manifest: dict[str, Any], **updates: Any) -> No
     write_json_atomic(path, manifest)
 
 
+
+def _download_planned_supercells(
+    client: SIIClient,
+    commune: Commune,
+    layer: str,
+    selected_supercells: list[tuple[int, int]],
+    paths: dict[str, Path],
+    settings: Settings,
+    manifest: dict[str, Any],
+    *,
+    force: bool,
+) -> None:
+    total = len(selected_supercells)
+    downloaded = 0
+    pending: list[dict[str, Any]] = []
+    _update_manifest(
+        paths["manifest"],
+        manifest,
+        status="descargando_wms",
+        supercells_downloaded=0,
+        wms_supercells_scanned=0,
+        wms_pending_supercells=[],
+    )
+
+    for ordinal, (sc_x, sc_y) in enumerate(selected_supercells, start=1):
+        destination = paths["tiles"] / f"sc_{sc_x}_{sc_y}.png"
+        try:
+            download_supercell(
+                client,
+                commune.sii_code,
+                layer,
+                sc_x,
+                sc_y,
+                destination,
+                settings,
+                force=force,
+            )
+            downloaded += 1
+        except Exception as error:
+            pending.append(
+                {
+                    "ordinal": ordinal,
+                    "sc_x": sc_x,
+                    "sc_y": sc_y,
+                    "error": str(error)[:500],
+                }
+            )
+            print(
+                f"    [AVISO] WMS {ordinal:,}/{total:,} ({sc_x},{sc_y}) pendiente; "
+                "se reintentará al terminar el recorrido.",
+                flush=True,
+            )
+        if ordinal % 10 == 0 or ordinal == total:
+            _update_manifest(
+                paths["manifest"],
+                manifest,
+                supercells_downloaded=downloaded,
+                wms_supercells_scanned=ordinal,
+                wms_pending_supercells=pending,
+            )
+            suffix = f" | pendientes {len(pending):,}" if pending else ""
+            print(f"    WMS: {downloaded:,}/{total:,}{suffix}", flush=True)
+
+    if pending:
+        print(f"    WMS: reintentando {len(pending):,} superceldas pendientes.", flush=True)
+        _update_manifest(paths["manifest"], manifest, status="reintentando_wms")
+        still_pending: list[dict[str, Any]] = []
+        retry_queue = pending
+        for retry_index, item in enumerate(retry_queue):
+            destination = paths["tiles"] / f"sc_{item['sc_x']}_{item['sc_y']}.png"
+            try:
+                download_supercell(
+                    client,
+                    commune.sii_code,
+                    layer,
+                    item["sc_x"],
+                    item["sc_y"],
+                    destination,
+                    settings,
+                    force=force,
+                )
+                downloaded += 1
+            except Exception as error:
+                still_pending.append({**item, "error": str(error)[:500]})
+            _update_manifest(
+                paths["manifest"],
+                manifest,
+                supercells_downloaded=downloaded,
+                wms_supercells_scanned=total,
+                wms_pending_supercells=still_pending + retry_queue[retry_index + 1 :],
+            )
+        pending = still_pending
+
+    if pending:
+        coordinates = ", ".join(
+            f"#{item['ordinal']} ({item['sc_x']},{item['sc_y']})" for item in pending[:10]
+        )
+        if len(pending) > 10:
+            coordinates += f", y {len(pending) - 10} más"
+        raise RuntimeError(
+            f"{len(pending)} superceldas WMS siguieron fallando tras el reintento diferido: {coordinates}"
+        )
+
+    _update_manifest(
+        paths["manifest"],
+        manifest,
+        status="descargando_wms",
+        supercells_downloaded=total,
+        wms_supercells_scanned=total,
+        wms_pending_supercells=[],
+    )
+
 def plan_commune(
     commune: Commune,
     settings: Settings,
@@ -343,12 +455,16 @@ def process_commune(
             print(f"[PLAN] {commune.name}: {len(all_supercells):,} superceldas z{settings.zoom}")
             return manifest
 
-        for ordinal, (sc_x, sc_y) in enumerate(selected_supercells, start=1):
-            destination = paths["tiles"] / f"sc_{sc_x}_{sc_y}.png"
-            download_supercell(client, commune.sii_code, plan["layer"], sc_x, sc_y, destination, settings, force=force)
-            if ordinal % 10 == 0 or ordinal == len(selected_supercells):
-                _update_manifest(paths["manifest"], manifest, supercells_downloaded=ordinal)
-                print(f"    WMS: {ordinal:,}/{len(selected_supercells):,}", flush=True)
+        _download_planned_supercells(
+            client,
+            commune,
+            plan["layer"],
+            selected_supercells,
+            paths,
+            settings,
+            manifest,
+            force=force,
+        )
 
         if reusable_vectors:
             polygons = gpd.read_parquet(paths["vectors"])

@@ -22,7 +22,8 @@ sin Docker, WSL, VPN ni servidores externos.
    comunas o una comuna específica.
 2. Obtiene la capa WMS correspondiente y el límite territorial comunal.
 3. Calcula superceldas de 1.024 x 1.024 píxeles a zoom 19.
-4. Descarga los PNG con pausas, reintentos y caché local.
+4. Descarga los PNG con pausas, reintentos, caché local y un segundo recorrido
+   diferido para las superceldas que fallen sin detener el resto de la comuna.
 5. Vectoriza por bloques con solape y detección tolerante del color de relleno.
 6. Descarga una vez el Parquet histórico 2026S1 de la región, verifica su
    SHA-256 y extrae las claves de roles de la comuna.
@@ -118,6 +119,8 @@ obtenidos desde la API y los campos técnicos:
 - Roles nuevos en 2026S2: se intentan recuperar desde polígonos huérfanos.
 - Copropiedades: se permiten varios registros asociados a un mismo polígono o rol.
 - Caídas, límites de tasa y cortes de red: reintentos exponenciales y checkpoints.
+  Una supercelda WMS que agota sus intentos queda pendiente mientras continúa el
+  recorrido; se reintenta al final y sólo impide vectorizar si vuelve a fallar.
 - Una comuna puede finalizar como `completa_con_observaciones`; no se exige un
   100% artificial para cerrar el proceso.
 
