@@ -4,7 +4,7 @@
 
 ## Resumen
 - Fecha: 2026-09-25
-- Último commit: `1f63852` — feat: checkpoints reanudables de vectorización con memoria acotada
+- Último commit de código: `1f63852` — checkpoints reanudables de vectorización; documentación anterior: `afc68b5`.
 - ¿Publicado?: Sí, sincronizado con origin/main en GitHub. Herramienta local CLI sin despliegue a servidor. Sin cambios locales pendientes.
 
 ## Entorno
@@ -13,14 +13,18 @@
 - Salidas locales: GeoParquet, respuestas API comprimidas, checkpoints y catálogos en carpeta configurada en `config/sii_geometry.local.json` (por defecto fuera del repositorio). Sin secretos ni credenciales requeridas.
 
 ## Próximo paso exacto
-Relanzar la comuna de Arica (1101) con el código nuevo (`.venv/bin/python -m sii_geometry scrape --comuna 1101`, vía `omp-tarea-larga`) para validar en un caso real de ~60k superceldas que la vectorización checkpointeada sostiene memoria acotada hasta el final y que una interrupción a mitad de vectorización reanuda sin recomenzar desde cero.
+Dejar correr `arica` (1101) bajo `omp-tarea-larga` y consultar `omp-tarea-larga estado arica` cuando el monitor anuncie terminación o anomalía. Confirmar resultado final y memoria en escala real; no inferirlo del smoke sintético.
 
 ## Pendientes priorizados
-1. Relanzar y monitorear Arica (1101) con el nuevo checkpoint de vectorización; confirmar que no repite el OOM que mató dos ejecuciones previas (2026-09-24 17:16 y 22:58, kernel oom-kill, justo tras `Vectorizacion: 6.870/6.870 bloques` con el código viejo).
+1. Arica (1101) relanzada con checkpoint nuevo; proceso y monitor activos, `59526/59526` superceldas y estado `vectorizando` en la lectura puntual del smoke. Confirmar que termina sin el OOM sufrido en las dos ejecuciones con código viejo.
 2. Ejecutar prueba completa de la comuna piloto Peñaflor (`14504`) con la recuperación diferida activa.
 3. Monitorear tasa de respuesta y pausas frente a la API WMS/getFeatureInfo del SII.
 4. Evaluar tasa de match punto-en-polígono y vecino más cercano sobre el dataset 2026S2.
 5. Mantener actualizado el catálogo de insumos regionales (`config/catastro_2026S1_assets.json`).
+
+## Verificación de reanudación
+- Suite: 41/41 tests OK. Smoke aislado con seis bloques PNG sintéticos: interrupción tras 2/6 bloques confirmados; al reabrir, solo se procesaron los cuatro restantes y se llegó a etapa `vectors` (12 geometrías). Segunda reanudación: cero commits.
+- Contra corrida limpia: área de diferencia simétrica de la unión y diferencias por geometría = 0,0 m². RSS pico observado en fixture pequeño: 190816 KiB limpia y 194760 KiB reanudada; no extrapolable a Arica. Script y fixture efímeros eliminados.
 
 ## Riesgos activos
 - Bloqueo o intermitencia de endpoints WMS/API del SII — mitigado con pausas configuradas, caché local de tiles, reintentos diferidos y checkpoints por comuna.
