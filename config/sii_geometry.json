@@ -15,6 +15,10 @@
   "fill_color": [182, 221, 232],
   "fill_tolerance": [20, 22, 22],
   "min_fill_alpha": 20,
+  "large_component_max_polygons": 20000,
+  "large_component_hard_limit_polygons": 200000,
+  "component_tile_size": 2000,
+  "vector_graph_page_size": 500,
   "wms_url": "https://www4.sii.cl/mapasui/services/ui/wmsProxyService/call",
   "api_url": "https://www4.sii.cl/mapasui/services/data/mapasFacadeService"
 }

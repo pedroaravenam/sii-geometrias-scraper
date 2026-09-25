@@ -35,6 +35,10 @@ class Settings:
     reference_csv: Path | None = None
     storage_root: Path | None = None
     archive_wms_tiles: bool = True
+    large_component_max_polygons: int = 20_000
+    large_component_hard_limit_polygons: int = 200_000
+    component_tile_size: int = 2_000
+    vector_graph_page_size: int = 500
     repository_root: Path = REPOSITORY_ROOT
 
     @property

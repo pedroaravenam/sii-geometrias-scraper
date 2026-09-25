@@ -31,6 +31,7 @@ from .state import (
     read_manifest,
     save_api_result,
     utc_now,
+    write_geoparquet_atomic,
     write_json_atomic,
 )
 from .storage import publish_commune
@@ -44,6 +45,7 @@ def _paths(settings: Settings, commune: Commune) -> dict[str, Path]:
         "tiles": raw / "tiles",
         "manifest": raw / "manifest.json",
         "checkpoint": raw / "checkpoints" / "state.sqlite",
+        "vector_checkpoint": raw / "checkpoints" / "vectors.sqlite",
         "raw_api": raw / "respuestas_api.jsonl",
         "vectors": raw / "poligonos_vectorizados.parquet",
         "metrics": processed / f"{commune.sii_code}_{commune.slug}_metrics.json",
@@ -72,7 +74,17 @@ def _manifest_base(settings: Settings, commune: Commune) -> dict[str, Any]:
 
 
 def _archive_before_force(paths: dict[str, Path]) -> None:
-    """Conserva artefactos reemplazables y reinicia sólo el checkpoint activo."""
+    """Conserva artefactos reemplazables y reinicia los checkpoints activos.
+
+    `--force` nunca reutiliza un checkpoint de vectorización previo: se
+    respalda una copia y se elimina junto con sus temporales `.part`/`.sqlite`
+    para que la próxima ejecución arranque desde una identidad de checkpoint
+    limpia (invariante 2). El `.parquet.part` del Parquet final publicado vive
+    bajo `processed/`, fuera del árbol `raw/`, así que se limpia por separado
+    de los temporales bajo `raw` (hallazgo 7)."""
+    output_temp = paths["output"].with_suffix(paths["output"].suffix + ".part")
+    if output_temp.exists():
+        output_temp.unlink()
     if not paths["raw"].exists():
         return
     stamp = utc_now().replace(":", "").replace("+", "_")
@@ -82,14 +94,17 @@ def _archive_before_force(paths: dict[str, Path]) -> None:
         source = paths[key]
         if source.exists():
             shutil.copy2(source, backup / f"{key}_{source.name}")
-    database = paths["checkpoint"]
-    if database.exists():
-        with sqlite3.connect(database) as source, sqlite3.connect(backup / "state.sqlite") as destination:
-            source.backup(destination)
-    for suffix in ["", "-wal", "-shm"]:
-        candidate = Path(str(database) + suffix)
-        if candidate.exists():
-            candidate.unlink()
+    for db_key, backup_name in (("checkpoint", "state.sqlite"), ("vector_checkpoint", "vectors.sqlite")):
+        database = paths[db_key]
+        if database.exists():
+            with sqlite3.connect(database) as source, sqlite3.connect(backup / backup_name) as destination:
+                source.backup(destination)
+        for suffix in ["", "-wal", "-shm"]:
+            candidate = Path(str(database) + suffix)
+            if candidate.exists():
+                candidate.unlink()
+    for temp_candidate in paths["raw"].glob("**/*.part"):
+        temp_candidate.unlink()
 
 
 def _update_manifest(path: Path, manifest: dict[str, Any], **updates: Any) -> None:
@@ -400,14 +415,6 @@ def process_commune(
 ) -> dict[str, Any]:
     paths = _paths(settings, commune)
     current = read_manifest(paths["manifest"])
-    reusable_vectors = (
-        not force
-        and max_supercells is None
-        and not only_supercells
-        and paths["vectors"].exists()
-        and bool(current.get("vectorization"))
-        and current.get("supercells_downloaded") == current.get("supercells_planned")
-    )
     if not force and not rematch and current.get("status") in TERMINAL_STATUSES and paths["output"].exists():
         if settings.storage_root:
             try:
@@ -466,26 +473,29 @@ def process_commune(
             force=force,
         )
 
-        if reusable_vectors:
-            polygons = gpd.read_parquet(paths["vectors"])
-            vector_metrics = manifest["vectorization"]
-            print(f"    Vectorizacion: reutilizando {len(polygons):,} poligonos guardados", flush=True)
-        else:
-            _update_manifest(paths["manifest"], manifest, status="vectorizando")
-            polygons, block_metrics = vectorize_supercells(paths["tiles"], selected_supercells, settings)
-            if polygons.empty:
-                raise RuntimeError("La vectorización no produjo polígonos; revise la simbología WMS")
-            polygons.to_parquet(paths["vectors"])
-            fill_ratios = [float(item["fill_ratio"]) for item in block_metrics]
-            vector_metrics = {
-                "polygons": len(polygons),
-                "valid": int(polygons.is_valid.sum()),
-                "blocks": len(block_metrics),
-                "large_components": int((polygons["pol_size_class"] == "large_component").sum()),
-                "fill_ratio_min": min(fill_ratios),
-                "fill_ratio_max": max(fill_ratios),
-                "blocks_detail": block_metrics,
-            }
+        _update_manifest(paths["manifest"], manifest, status="vectorizando")
+        polygons, block_metrics = vectorize_supercells(
+            paths["tiles"],
+            selected_supercells,
+            settings,
+            paths["vector_checkpoint"],
+            commune_code=commune.sii_code,
+            layer=plan["layer"],
+            period=settings.periodo_geometria,
+        )
+        if polygons.empty:
+            raise RuntimeError("La vectorización no produjo polígonos; revise la simbología WMS")
+        write_geoparquet_atomic(polygons, paths["vectors"])
+        fill_ratios = [float(item["fill_ratio"]) for item in block_metrics]
+        vector_metrics = {
+            "polygons": len(polygons),
+            "valid": int(polygons.is_valid.sum()),
+            "blocks": len(block_metrics),
+            "large_components": int((polygons["pol_size_class"] == "large_component").sum()),
+            "fill_ratio_min": min(fill_ratios),
+            "fill_ratio_max": max(fill_ratios),
+            "blocks_detail": block_metrics,
+        }
         _update_manifest(paths["manifest"], manifest, status="consultando_api", vectorization=vector_metrics)
 
         reference = reference_csv or find_reference_csv(settings.repository_root / "data" / "raw" / "catastral")
@@ -533,9 +543,7 @@ def process_commune(
         output["wms_style"] = "PREDIOS_WMS_V0"
         output["zoom"] = settings.zoom
         output["geometry_source"] = "SII_WMS_raster_vectorized"
-        temporary_output = paths["output"].with_suffix(".parquet.part")
-        output.to_parquet(temporary_output)
-        temporary_output.replace(paths["output"])
+        write_geoparquet_atomic(output, paths["output"])
 
         observed_periods = sorted(str(value) for value in output.get("periodo", pd.Series(dtype=str)).dropna().unique())
         expected_period = _expected_api_period(settings.periodo_geometria)
