@@ -4,8 +4,8 @@
 > Formato: `## AAAA-MM-DD — título (commit)`.
 
 
-## 2026-10-29 — Informe horario verificado del scraper de Arica, mismo formato que Coquimbo (commit en este cambio)
-- Se creó `informe-horario-arica-restante` (herramienta personal en `~/.local/bin`, no versionada, igual que la de Coquimbo) con timer de usuario horario y persistente. Genera tabla de estado de unidad/timer, evidencia verificada de manifiesto/WMS/API/checkpoint, chequeo de OOM y memoria, y comentario opcional de un modelo gratuito; se autodesactiva al detectar el fin de la tarea. Primer informe real: Camarones `descargando_wms`, 8.790/49.007 tiles WMS, sin OOM atribuible, memoria disponible 3.889 MiB. Se retiró un enfoque simplificado anterior (script+timer versionados en el repo) que no seguía la convención establecida.
+## 2026-10-29 — Informe horario verificado del scraper de Arica llega al panel lateral (commit en este cambio)
+- El informe anterior solo se registraba en log/journal: no bastaba, el punto era verlo en vivo en el panel lateral como el de Coquimbo. Se agregó push real con `herdr pane run w5:p6 "cat ultimo-informe.md"`, el mismo mecanismo que usa `mostrar_panel()` dentro de `omp-tarea-larga`. Se dejó registrado el pane destino en `panel_avances`. Verificado leyendo el panel tras ejecutar el servicio: la tabla Markdown completa (unidad/timer, Camarones 9.840/49.007 tiles WMS, OOM, memoria, comentario del modelo gratuito) apareció en `w5:p6`.
 
 ## 2026-09-25 — Smoke de reanudación y relanzamiento de Arica (1f63852)
 - Verificación aislada con seis bloques PNG sintéticos: crash inyectado después de confirmar 2/6 bloques; el proceso nuevo reabrió SQLite, procesó solo cuatro bloques y terminó en etapa `vectors` con 12 geometrías. Una segunda reanudación confirmó cero commits adicionales.
