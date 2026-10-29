@@ -15,7 +15,7 @@
 ## Ejecución regional activa
 - `arica-restante` iniciada el 2026-10-29 con `omp-tarea-larga`, servicio y timer activos (monitoreo cada 30 min, sin modelo). Comando: `.venv/bin/python -u -m sii_geometry scrape --comuna 1106 --comuna 1302 --comuna 1301`. Insumo histórico regional verificado y Camarones seleccionado primero; Arica (1101) ya estaba terminada.
 - Revisar con `omp-tarea-larga estado arica-restante` y `omp-tarea-larga log arica-restante 30`. No lanzar otro scraper SII en paralelo. Los 18 GeoParquet documentados arriba son el corte anterior al término de esta corrida.
-- Informe de progreso cada hora en punto mediante `tarea-arica-restante-reporte.timer` (systemd de usuario, persistente entre reinicios y sin modelo). Salida: `~/.local/state/omp-tareas/arica-restante/reporte-horario.log`; notificación de escritorio si está disponible. Es independiente del monitor de anomalías cada 30 min y se desactiva al observar el fin de la tarea.
+- Informe horario verificado (mismo formato que usamos en Coquimbo): `informe-horario-arica-restante.timer` (systemd de usuario, personal, no versionado, hora en punto, persistente). Genera tabla de estado de unidad/timer, evidencia de manifiesto/WMS/API/checkpoint, chequeo de OOM y memoria, y comentario opcional de un modelo gratuito. Salida: `~/.local/state/omp-tareas/arica-restante/informes-horarios.log`; se autodesactiva al detectar que la tarea terminó. Independiente del monitor de anomalías cada 30 min.
 
 ## Pendientes priorizados
 1. Antofagasta y Calama tienen capturas parciales distintas entre la copia del trabajo y la local; no reemplazar PNG ni checkpoints con el mismo nombre sin resolver identidad de captura.

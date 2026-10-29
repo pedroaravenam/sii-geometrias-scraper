@@ -1,7 +1,0 @@
-[Unit]
-Description=Informe horario del scraper SII de Arica y Parinacota
-
-[Service]
-Type=oneshot
-WorkingDirectory=%h/Desarrollo/sii-geometrias-scraper
-ExecStart=%h/Desarrollo/sii-geometrias-scraper/scripts/report_geometry_progress.sh arica-restante

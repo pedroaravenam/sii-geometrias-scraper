@@ -4,8 +4,8 @@
 > Formato: `## AAAA-MM-DD — título (commit)`.
 
 
-## 2026-10-29 — Informe horario persistente del scraper de Arica (commit en este cambio)
-- Se añadió un timer de usuario que ejecuta cada hora el mismo comando de progreso configurado en `omp-tarea-larga`, guarda un reporte y notifica en escritorio sin iniciar otro scraper ni consultar modelos. Primer reporte real: Camarones `descargando_wms`, 7.920 tiles; la tarea y el monitor de anomalías de 30 minutos continuaron activos. El timer se desactiva cuando detecta que la tarea terminó.
+## 2026-10-29 — Informe horario verificado del scraper de Arica, mismo formato que Coquimbo (commit en este cambio)
+- Se creó `informe-horario-arica-restante` (herramienta personal en `~/.local/bin`, no versionada, igual que la de Coquimbo) con timer de usuario horario y persistente. Genera tabla de estado de unidad/timer, evidencia verificada de manifiesto/WMS/API/checkpoint, chequeo de OOM y memoria, y comentario opcional de un modelo gratuito; se autodesactiva al detectar el fin de la tarea. Primer informe real: Camarones `descargando_wms`, 8.790/49.007 tiles WMS, sin OOM atribuible, memoria disponible 3.889 MiB. Se retiró un enfoque simplificado anterior (script+timer versionados en el repo) que no seguía la convención establecida.
 
 ## 2026-09-25 — Smoke de reanudación y relanzamiento de Arica (1f63852)
 - Verificación aislada con seis bloques PNG sintéticos: crash inyectado después de confirmar 2/6 bloques; el proceso nuevo reabrió SQLite, procesó solo cuatro bloques y terminó en etapa `vectors` con 12 geometrías. Una segunda reanudación confirmó cero commits adicionales.
