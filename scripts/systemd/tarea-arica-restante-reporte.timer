@@ -1,0 +1,10 @@
+[Unit]
+Description=Informe horario del avance del scraper SII
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+Unit=tarea-arica-restante-reporte.service
+
+[Install]
+WantedBy=timers.target

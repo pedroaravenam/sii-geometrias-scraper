@@ -3,34 +3,36 @@
 > Snapshot del estado actual, ≤120 líneas. El detalle histórico va en `docs/history/HISTORIAL.md` y los planes largos en `docs/ROADMAP.md`.
 
 ## Resumen
-- Fecha: 2026-09-25
-- Último commit de código: `1f63852` — checkpoints reanudables de vectorización; documentación anterior: `afc68b5`.
-- ¿Publicado?: Sí, sincronizado con origin/main en GitHub. Herramienta local CLI sin despliegue a servidor. Sin cambios locales pendientes.
+- Fecha: 2026-10-29.
+- Avance consolidado: 18 GeoParquet comunales para `2026S2` en `/home/pedroaravenam/resultados-sii`; 15 de Coquimbo, Arica, Peñaflor e Isla de Pascua. Todos figuran `completa_con_observaciones`.
+- Inventario y acceso desde este proyecto: `avance/README.md` y su única carpeta `avance/datos/`. El directorio físico `/home/pedroaravenam/resultados-sii` contiene resultados, trabajo (`trabajo/`), parciales (`avances-importados/`) y archivos fuente (`fuentes-drive/`); `data/` en el proyecto es un enlace de compatibilidad. Los datos siguen fuera de Git.
 
 ## Entorno
-- Destino / Ejecución: Local Windows (PowerShell/CMD con Python 3.11+) o Linux (.venv con Python 3.11+).
-- Insumos externos: Google Drive público (carpeta `1mIjnsXy3t7xs3BR-sDdlg1F8wBNqUrBp`) para Parquets 2026S1 regionales; WMS público y API de consulta del SII de Chile (`www4.sii.cl`).
-- Salidas locales: GeoParquet, respuestas API comprimidas, checkpoints y catálogos en carpeta configurada en `config/sii_geometry.local.json` (por defecto fuera del repositorio). Sin secretos ni credenciales requeridas.
+- Ejecución local Windows o Linux (Python 3.11+).
+- `storage_root`: `/home/pedroaravenam/resultados-sii` (configuración local de este equipo).
+- Catálogo: 347 códigos SII (18 terminados, 329 pendientes); la referencia incluida contiene 346 y el pipeline agrega Trehuaco (`8108`).
 
-## Próximo paso exacto
-Dejar correr `arica` (1101) bajo `omp-tarea-larga` y consultar `omp-tarea-larga estado arica` cuando el monitor anuncie terminación o anomalía. Confirmar resultado final y memoria en escala real; no inferirlo del smoke sintético.
+## Ejecución regional activa
+- `arica-restante` iniciada el 2026-10-29 con `omp-tarea-larga`, servicio y timer activos (monitoreo cada 30 min, sin modelo). Comando: `.venv/bin/python -u -m sii_geometry scrape --comuna 1106 --comuna 1302 --comuna 1301`. Insumo histórico regional verificado y Camarones seleccionado primero; Arica (1101) ya estaba terminada.
+- Revisar con `omp-tarea-larga estado arica-restante` y `omp-tarea-larga log arica-restante 30`. No lanzar otro scraper SII en paralelo. Los 18 GeoParquet documentados arriba son el corte anterior al término de esta corrida.
+- Informe de progreso cada hora en punto mediante `tarea-arica-restante-reporte.timer` (systemd de usuario, persistente entre reinicios y sin modelo). Salida: `~/.local/state/omp-tareas/arica-restante/reporte-horario.log`; notificación de escritorio si está disponible. Es independiente del monitor de anomalías cada 30 min y se desactiva al observar el fin de la tarea.
 
 ## Pendientes priorizados
-1. Arica (1101) relanzada con checkpoint nuevo; proceso y monitor activos, `59526/59526` superceldas y estado `vectorizando` en la lectura puntual del smoke. Confirmar que termina sin el OOM sufrido en las dos ejecuciones con código viejo.
-2. Ejecutar prueba completa de la comuna piloto Peñaflor (`14504`) con la recuperación diferida activa.
-3. Monitorear tasa de respuesta y pausas frente a la API WMS/getFeatureInfo del SII.
-4. Evaluar tasa de match punto-en-polígono y vecino más cercano sobre el dataset 2026S2.
-5. Mantener actualizado el catálogo de insumos regionales (`config/catastro_2026S1_assets.json`).
+1. Antofagasta y Calama tienen capturas parciales distintas entre la copia del trabajo y la local; no reemplazar PNG ni checkpoints con el mismo nombre sin resolver identidad de captura.
+2. Río Verde tiene 941 PNG importados, aislados en `resultados-sii/avances-importados/2026S2/`.
+3. Evaluar calidad y cobertura geométrica de las 18 comunas `completa_con_observaciones`.
 
-## Verificación de reanudación
-- Suite: 41/41 tests OK. Smoke aislado con seis bloques PNG sintéticos: interrupción tras 2/6 bloques confirmados; al reabrir, solo se procesaron los cuatro restantes y se llegó a etapa `vectors` (12 geometrías). Segunda reanudación: cero commits.
-- Contra corrida limpia: área de diferencia simétrica de la unión y diferencias por geometría = 0,0 m². RSS pico observado en fixture pequeño: 190816 KiB limpia y 194760 KiB reanudada; no extrapolable a Arica. Script y fixture efímeros eliminados.
+## Verificación de consolidación
+- Tres archivos fuente de Drive verificados con `7z t`: `Catastro_SII` (145.785 archivos), `geometrias` (145.778) y `data` (3.902). Las carpetas `geometrias` de los dos primeros son idénticas.
+- Peñaflor (32.119 filas) e Isla de Pascua (3.045 filas) se publicaron con `publish_commune`; 18 GeoParquet finales y catálogo actualizado. El manifiesto de Isla y su checkpoint SQLite fueron comprobados antes de la importación.
+- Limpieza conservadora de las 18 comunas publicadas: 675.563 PNG locales, checkpoints `vectors.sqlite` y vectores Parquet intermedios retirados tras verificar ZIP/CRC, GeoParquet/SHA-256, API gzip y SQLite publicado. Se recuperaron ~26,76 GiB; `/home` mostró 35 GiB disponibles al terminar. Se conservaron manifiestos, salida procesada, API y `state.sqlite` locales; `process_commune` omitió Isla de Pascua sin red. No se tocaron Camarones, General Lagos, Putre ni los parciales importados.
 
 ## Riesgos activos
-- Bloqueo o intermitencia de endpoints WMS/API del SII — mitigado con pausas configuradas, caché local de tiles, reintentos diferidos y checkpoints por comuna.
-- Consumo de memoria en comunas extensas o polígonos complejos — mitigado con checkpoint SQLite reanudable por etapas (blocks→graph→components→vectors) con memoria acotada por página en la fase de fusión de duplicados; la materialización final del GeoDataFrame (post-dedup, ligada al matching de roles) sigue completa en RAM y es la limitación de memoria conocida restante.
-- Sobrecarga de red o IP — mitigado con serialización de descargas y recomendación de no concurrencia en la misma conexión.
+- Bloqueo/intermitencia del SII: pausas y reintentos configurados; nunca descargas simultáneas desde la misma conexión.
+- Memoria durante el match final de comunas extensas.
+- Archivos originales de Drive con atributos prediales: no publicarlos en Git ni volver a descomprimirlos junto a los resultados canónicos.
 
 ## Enlaces
+- `avance/README.md`
 - `docs/ROADMAP.md`
 - `docs/history/HISTORIAL.md`
